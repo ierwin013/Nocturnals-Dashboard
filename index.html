@@ -68,6 +68,30 @@
           </div>
         </article>
       </section>
+
+      <section class="main-grid team-records-grid">
+        <article class="card roster-card team-records-card">
+          <div class="card-head">
+            <div>
+              <p class="eyebrow">Milestones</p>
+              <h2>Team Records</h2>
+            </div>
+            <button id="addTeamRecordBtn" class="ghost-btn">+ Add</button>
+          </div>
+          <div class="table-wrap">
+            <table class="team-records-table">
+              <thead>
+                <tr>
+                  <th>Originator Name</th>
+                  <th>Record Broke</th>
+                  <th>#</th>
+                </tr>
+              </thead>
+              <tbody id="teamRecordsBody"></tbody>
+            </table>
+          </div>
+        </article>
+      </section>
     </main>
 
     <dialog id="originatorDialog" class="modal">
@@ -134,6 +158,28 @@
         <menu>
           <button value="cancel" class="ghost-btn">Cancel</button>
           <button value="default" class="primary-btn">Save effort</button>
+        </menu>
+      </form>
+    </dialog>
+
+    <dialog id="teamRecordDialog" class="modal">
+      <form method="dialog" id="teamRecordForm">
+        <h3>Add Team Record</h3>
+        <label>
+          Originator Name
+          <input name="originatorName" required maxlength="60" />
+        </label>
+        <label>
+          Record Broke
+          <input name="recordBroke" required maxlength="120" />
+        </label>
+        <label>
+          Record #
+          <input type="number" min="0" step="1" name="recordNumber" required />
+        </label>
+        <menu>
+          <button value="cancel" class="ghost-btn">Cancel</button>
+          <button value="default" class="primary-btn">Save record</button>
         </menu>
       </form>
     </dialog>

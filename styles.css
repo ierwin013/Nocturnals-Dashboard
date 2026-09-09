@@ -199,6 +199,10 @@ h2 {
   display: block;
 }
 
+.team-records-grid {
+  margin-top: 0.95rem;
+}
+
 .goals-strip,
 .roster-card {
   padding: 1rem;
@@ -291,6 +295,33 @@ th:last-child,
 td:last-child {
   width: 10%;
   text-align: right;
+}
+
+.team-records-table {
+  min-width: 0;
+  table-layout: auto;
+}
+
+.team-records-table th:first-child,
+.team-records-table td:first-child {
+  width: 38%;
+}
+
+.team-records-table th:nth-child(2),
+.team-records-table td:nth-child(2) {
+  width: 46%;
+  text-align: left;
+}
+
+.team-records-table th:last-child,
+.team-records-table td:last-child {
+  width: 16%;
+  text-align: center;
+}
+
+.empty-row {
+  text-align: center;
+  color: var(--muted);
 }
 
 .originator {

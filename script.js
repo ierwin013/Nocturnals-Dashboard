@@ -27,8 +27,10 @@ const ui = {
   prevDayBtn: document.getElementById('prevDayBtn'),
   nextDayBtn: document.getElementById('nextDayBtn'),
   addOriginatorBtn: document.getElementById('addOriginatorBtn'),
+  addTeamRecordBtn: document.getElementById('addTeamRecordBtn'),
   editGoalsBtn: document.getElementById('editGoalsBtn'),
   logEffortBtn: document.getElementById('logEffortBtn'),
+  teamRecordsBody: document.getElementById('teamRecordsBody'),
   originatorDialog: document.getElementById('originatorDialog'),
   originatorForm: document.getElementById('originatorForm'),
   originatorDialogTitle: document.getElementById('originatorDialogTitle'),
@@ -37,6 +39,8 @@ const ui = {
   logEffortDialog: document.getElementById('logEffortDialog'),
   logEffortForm: document.getElementById('logEffortForm'),
   logEffortOriginator: document.getElementById('logEffortOriginator'),
+  teamRecordDialog: document.getElementById('teamRecordDialog'),
+  teamRecordForm: document.getElementById('teamRecordForm'),
 };
 
 let editOriginatorId = null;
@@ -52,6 +56,7 @@ function loadState() {
     goals: { ...DEFAULT_GOALS },
     originators: DEFAULT_ORIGINATORS,
     metricsByDate: {},
+    teamRecords: [],
   };
 
   try {
@@ -60,11 +65,15 @@ function loadState() {
     const parsed = JSON.parse(raw);
     const originators =
       Array.isArray(parsed.originators) && parsed.originators.length ? parsed.originators : DEFAULT_ORIGINATORS;
+    const teamRecords = Array.isArray(parsed.teamRecords)
+      ? parsed.teamRecords.map(normalizeTeamRecord).filter(Boolean)
+      : [];
     return {
       currentDate: today,
       goals: normalizeGoals(parsed.goals, originators.length),
       originators,
       metricsByDate: parsed.metricsByDate && typeof parsed.metricsByDate === 'object' ? parsed.metricsByDate : {},
+      teamRecords,
     };
   } catch {
     return fallback;
@@ -105,6 +114,7 @@ function bindEvents() {
     render();
   });
   ui.addOriginatorBtn.addEventListener('click', openAddOriginatorDialog);
+  ui.addTeamRecordBtn.addEventListener('click', openAddTeamRecordDialog);
   ui.editGoalsBtn.addEventListener('click', openGoalsDialog);
   ui.logEffortBtn.addEventListener('click', openLogEffortDialog);
 
@@ -158,6 +168,20 @@ function bindEvents() {
     saveState();
     render();
     ui.logEffortDialog.close();
+  });
+
+  ui.teamRecordForm.addEventListener('submit', (event) => {
+    event.preventDefault();
+    const formData = new FormData(ui.teamRecordForm);
+    const originatorName = String(formData.get('originatorName') || '').trim();
+    const recordBroke = String(formData.get('recordBroke') || '').trim();
+    const recordNumber = clamp(toNumber(formData.get('recordNumber')));
+    if (!originatorName || !recordBroke) return;
+    const id = `r-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+    state.teamRecords.push({ id, originatorName, recordBroke, recordNumber });
+    saveState();
+    render();
+    ui.teamRecordDialog.close();
   });
 }
 
@@ -228,6 +252,7 @@ function render() {
   renderTopStats(calculated.values);
   renderGoals(calculated.totals);
   renderRoster(calculated.totals);
+  renderTeamRecords();
   renderLogEffortSelect();
   saveState();
 }
@@ -485,6 +510,29 @@ function openLogEffortDialog() {
   ui.logEffortDialog.showModal();
 }
 
+function openAddTeamRecordDialog() {
+  ui.teamRecordForm.reset();
+  ui.teamRecordDialog.showModal();
+}
+
+function renderTeamRecords() {
+  if (!state.teamRecords.length) {
+    ui.teamRecordsBody.innerHTML = '<tr><td colspan="3" class="empty-row">No team records yet.</td></tr>';
+    return;
+  }
+
+  ui.teamRecordsBody.innerHTML = state.teamRecords
+    .map((record) => {
+      return `
+      <tr>
+        <td>${escapeHtml(record.originatorName)}</td>
+        <td>${escapeHtml(record.recordBroke)}</td>
+        <td>${clamp(record.recordNumber)}</td>
+      </tr>`;
+    })
+    .join('');
+}
+
 function clamp(value) {
   return Math.max(0, Number.isFinite(value) ? Math.floor(value) : 0);
 }
@@ -515,4 +563,18 @@ function normalizeGoals(rawGoals, originatorCount) {
 
 function hasNumber(value) {
   return Number.isFinite(Number(value));
+}
+
+function normalizeTeamRecord(rawRecord) {
+  if (!rawRecord || typeof rawRecord !== 'object') return null;
+  const originatorName = String(rawRecord.originatorName || '').trim();
+  const recordBroke = String(rawRecord.recordBroke || '').trim();
+  if (!originatorName || !recordBroke) return null;
+  const id = String(rawRecord.id || `r-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`);
+  return {
+    id,
+    originatorName,
+    recordBroke,
+    recordNumber: clamp(toNumber(rawRecord.recordNumber)),
+  };
 }
