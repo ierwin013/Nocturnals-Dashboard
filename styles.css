@@ -328,6 +328,19 @@ th {
   font-weight: 600;
 }
 
+.metric-input {
+  width: 3.2rem;
+  text-align: center;
+  padding: 0.2rem 0.35rem;
+  font-weight: 600;
+}
+
+.team-total-row td {
+  border-top: 1px solid rgba(170, 191, 224, 0.25);
+  border-bottom: none;
+  color: #dce6fb;
+}
+
 .icon-btn {
   width: 1.85rem;
   height: 1.85rem;
