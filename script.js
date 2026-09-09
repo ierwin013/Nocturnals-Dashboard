@@ -1,4 +1,5 @@
 const STORAGE_KEY = 'nocturnals-dashboard-v1';
+const DATA_FILE_URL = './data.json';
 
 const DEFAULT_ORIGINATORS = [
   { id: 'paula', name: 'Paula', initials: 'PA', subtitle: '' },
@@ -17,7 +18,7 @@ const DEFAULT_GOALS = {
   lender: 13,
 };
 
-const state = loadState();
+let state;
 const ui = {
   headerSubtitle: document.getElementById('headerSubtitle'),
   dateInput: document.getElementById('dateInput'),
@@ -47,11 +48,17 @@ const ui = {
 let editOriginatorId = null;
 let editTeamRecordId = null;
 
-bindEvents();
-initializeDate();
-render();
+// Initialize on page load
+(async () => {
+  state = await loadState();
+  bindEvents();
+  initializeDate();
+  render();
+  // Refresh data every 5 seconds to show updates from other users
+  setInterval(refreshData, 5000);
+})();
 
-function loadState() {
+async function loadState() {
   const today = getTodayISO();
   const fallback = {
     currentDate: today,
@@ -62,28 +69,128 @@ function loadState() {
   };
 
   try {
+    // Try to load from data.json first (shared data)
+    const response = await fetch(DATA_FILE_URL);
+    if (response.ok) {
+      const parsed = await response.json();
+      const originators =
+        Array.isArray(parsed.originators) && parsed.originators.length ? parsed.originators : DEFAULT_ORIGINATORS;
+      const teamRecords = Array.isArray(parsed.teamRecords)
+        ? parsed.teamRecords.map(normalizeTeamRecord).filter(Boolean)
+        : [];
+      return {
+        currentDate: today,
+        goals: normalizeGoals(parsed.goals, originators.length),
+        originators,
+        metricsByDate: parsed.metricsByDate && typeof parsed.metricsByDate === 'object' ? parsed.metricsByDate : {},
+        teamRecords,
+      };
+    }
+  } catch (err) {
+    console.log('data.json not found or error loading, using defaults');
+  }
+
+  // Fallback to localStorage if data.json doesn't exist
+  try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return fallback;
-    const parsed = JSON.parse(raw);
-    const originators =
-      Array.isArray(parsed.originators) && parsed.originators.length ? parsed.originators : DEFAULT_ORIGINATORS;
-    const teamRecords = Array.isArray(parsed.teamRecords)
-      ? parsed.teamRecords.map(normalizeTeamRecord).filter(Boolean)
-      : [];
-    return {
-      currentDate: today,
-      goals: normalizeGoals(parsed.goals, originators.length),
-      originators,
-      metricsByDate: parsed.metricsByDate && typeof parsed.metricsByDate === 'object' ? parsed.metricsByDate : {},
-      teamRecords,
-    };
-  } catch {
-    return fallback;
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      const originators =
+        Array.isArray(parsed.originators) && parsed.originators.length ? parsed.originators : DEFAULT_ORIGINATORS;
+      const teamRecords = Array.isArray(parsed.teamRecords)
+        ? parsed.teamRecords.map(normalizeTeamRecord).filter(Boolean)
+        : [];
+      return {
+        currentDate: today,
+        goals: normalizeGoals(parsed.goals, originators.length),
+        originators,
+        metricsByDate: parsed.metricsByDate && typeof parsed.metricsByDate === 'object' ? parsed.metricsByDate : {},
+        teamRecords,
+      };
+    }
+  } catch (err) {
+    console.log('localStorage error');
+  }
+
+  return fallback;
+}
+
+async function saveState() {
+  // Save to localStorage for quick access
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+
+  // Save to data.json for shared access (requires GitHub API)
+  try {
+    await saveToGitHub();
+  } catch (err) {
+    console.log('Could not save to GitHub, data saved locally only:', err);
   }
 }
 
-function saveState() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+async function saveToGitHub() {
+  const token = localStorage.getItem('github-token');
+  if (!token) {
+    console.log('No GitHub token found. Please set up GitHub authentication.');
+    return;
+  }
+
+  const owner = 'ierwin013';
+  const repo = 'Nocturnals-Dashboard';
+  const path = 'data.json';
+  const content = btoa(JSON.stringify(state, null, 2)); // Base64 encode
+
+  try {
+    // Get current file SHA
+    const getResponse = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}`, {
+      headers: {
+        Authorization: `token ${token}`,
+        Accept: 'application/vnd.github.v3+json',
+      },
+    });
+
+    let sha = null;
+    if (getResponse.ok) {
+      const data = await getResponse.json();
+      sha = data.sha;
+    }
+
+    // Update or create file
+    const putResponse = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}`, {
+      method: 'PUT',
+      headers: {
+        Authorization: `token ${token}`,
+        Accept: 'application/vnd.github.v3+json',
+      },
+      body: JSON.stringify({
+        message: `Update dashboard data - ${new Date().toISOString()}`,
+        content,
+        ...(sha && { sha }),
+      }),
+    });
+
+    if (!putResponse.ok) {
+      throw new Error(`GitHub API error: ${putResponse.status}`);
+    }
+  } catch (err) {
+    console.log('GitHub save error:', err);
+  }
+}
+
+async function refreshData() {
+  try {
+    const response = await fetch(DATA_FILE_URL + '?t=' + Date.now()); // Cache bust
+    if (response.ok) {
+      const latest = await response.json();
+      // Update state without losing current date or local changes
+      state.originators = latest.originators || state.originators;
+      state.goals = latest.goals || state.goals;
+      state.metricsByDate = latest.metricsByDate || state.metricsByDate;
+      state.teamRecords = latest.teamRecords || state.teamRecords;
+      render();
+    }
+  } catch (err) {
+    // Silently fail on refresh errors
+  }
 }
 
 function getTodayISO() {
@@ -267,7 +374,6 @@ function render() {
   renderRoster(calculated.totals);
   renderTeamRecords();
   renderLogEffortSelect();
-  saveState();
 }
 
 function renderHeader() {

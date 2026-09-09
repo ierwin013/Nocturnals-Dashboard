@@ -1,0 +1,20 @@
+{
+  "currentDate": "2026-09-09",
+  "goals": {
+    "pulls": 84,
+    "contacts": 76,
+    "attachments": 19,
+    "lender": 13
+  },
+  "originators": [
+    { "id": "paula", "name": "Paula", "initials": "PA", "subtitle": "" },
+    { "id": "peyton", "name": "Peyton", "initials": "PE", "subtitle": "" },
+    { "id": "henry", "name": "Henry", "initials": "HE", "subtitle": "" },
+    { "id": "dakota", "name": "Dakota", "initials": "DA", "subtitle": "" },
+    { "id": "evan", "name": "Evan", "initials": "EV", "subtitle": "" },
+    { "id": "jared", "name": "Jared", "initials": "JA", "subtitle": "" },
+    { "id": "ian", "name": "Ian", "initials": "IA", "subtitle": "" }
+  ],
+  "metricsByDate": {},
+  "teamRecords": []
+}
