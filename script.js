@@ -198,21 +198,23 @@ function calculate() {
   let totalContacts = 0;
   let totalAgents = 0;
   let totalLender = 0;
+  let pullersWithLeads = 0;
 
   state.originators.forEach((originator) => {
     if (!metrics[originator.id]) metrics[originator.id] = emptyMetrics();
     const personMetrics = metrics[originator.id];
-    totalPulls += clamp(personMetrics.pulls);
+    const pulls = clamp(personMetrics.pulls);
+    totalPulls += pulls;
     totalContacts += clamp(personMetrics.contacts);
     totalAgents += clamp(personMetrics.agents);
     totalLender += clamp(personMetrics.lender);
+    if (pulls > 0) pullersWithLeads += 1;
   });
 
-  const count = state.originators.length || 1;
-  const avgLeads = totalPulls / count;
+  const avgLeads = pullersWithLeads === 0 ? 0 : totalPulls / pullersWithLeads;
   const contactToLead = totalPulls === 0 ? 0 : (totalContacts / totalPulls) * 100;
   const contactToAttachment = totalContacts === 0 ? 0 : (totalAgents / totalContacts) * 100;
-  const sentToLender = totalAgents === 0 ? 0 : (totalLender / totalAgents) * 100;
+  const sentToLender = totalContacts === 0 ? 0 : (totalLender / totalContacts) * 100;
 
   return {
     totals: { totalPulls, totalContacts, totalAgents, totalLender },
@@ -257,7 +259,7 @@ function renderTopStats(values) {
     {
       title: 'Sent to Lender %',
       value: `${Math.round(values.sentToLender)}%`,
-      caption: 'Sent to lender compared to attachments',
+      caption: 'Sent to lender compared to contacts',
     },
   ];
 
@@ -522,7 +524,7 @@ function normalizeGoals(rawGoals, originatorCount) {
   const lender = hasNumber(source.lender)
     ? clamp(source.lender)
     : hasNumber(source.sentToLender)
-      ? clamp(Math.round(attachments * (toNumber(source.sentToLender) / 100)))
+      ? clamp(Math.round(contacts * (toNumber(source.sentToLender) / 100)))
       : DEFAULT_GOALS.lender;
 
   return { pulls, contacts, attachments, lender };
