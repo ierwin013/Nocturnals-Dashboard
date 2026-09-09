@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nocturnals Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app">
+      <header class="top-header">
+        <div class="title-block">
+          <p class="eyebrow">Daily Stats</p>
+          <h1><span class="moon" aria-hidden="true">☾</span> Nocturnals</h1>
+          <p class="subtitle" id="headerSubtitle"></p>
+        </div>
+        <div class="header-actions">
+          <button id="logEffortBtn" class="primary-btn">+ Log effort</button>
+          <div class="secondary-actions">
+            <button id="exportBtn" class="ghost-btn">Export Data</button>
+            <button id="importBtn" class="ghost-btn">Import Data</button>
+            <input id="importInput" type="file" accept="application/json" hidden />
+          </div>
+        </div>
+      </header>
+
+      <section class="date-nav" aria-label="Date navigation">
+        <button id="prevDayBtn" class="nav-btn" aria-label="Previous day">&lt;</button>
+        <p id="dateLabel"></p>
+        <button id="nextDayBtn" class="nav-btn" aria-label="Next day">&gt;</button>
+      </section>
+
+      <section class="stats-grid" id="topStats"></section>
+
+      <section class="main-grid">
+        <article class="card goals-card">
+          <div class="card-head">
+            <div>
+              <p class="eyebrow">Daily Goals</p>
+              <h2>Daily Goals</h2>
+            </div>
+            <button id="editGoalsBtn" class="ghost-btn">Edit Goals</button>
+          </div>
+          <div id="goalsList" class="goals-list"></div>
+        </article>
+
+        <article class="card roster-card">
+          <div class="card-head">
+            <div>
+              <p class="eyebrow">Daily Effort</p>
+              <h2>Nocturnals Roster</h2>
+            </div>
+            <button id="addOriginatorBtn" class="ghost-btn">+ Add</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Originator</th>
+                  <th>Pulls</th>
+                  <th>Contacts</th>
+                  <th>Agents</th>
+                  <th>Lender</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="rosterBody"></tbody>
+            </table>
+          </div>
+        </article>
+      </section>
+    </main>
+
+    <dialog id="originatorDialog" class="modal">
+      <form method="dialog" id="originatorForm">
+        <h3 id="originatorDialogTitle">Add Originator</h3>
+        <label>
+          Name
+          <input id="originatorName" name="name" required maxlength="40" />
+        </label>
+        <label>
+          Initials
+          <input id="originatorInitials" name="initials" required maxlength="4" />
+        </label>
+        <label>
+          Subtitle (optional)
+          <input id="originatorSubtitle" name="subtitle" maxlength="60" />
+        </label>
+        <menu>
+          <button value="cancel" class="ghost-btn">Cancel</button>
+          <button id="originatorSaveBtn" value="default" class="primary-btn">Save</button>
+        </menu>
+      </form>
+    </dialog>
+
+    <dialog id="goalsDialog" class="modal">
+      <form method="dialog" id="goalsForm">
+        <h3>Edit Goals</h3>
+        <label>
+          Average Leads Pulled goal
+          <input type="number" step="0.1" min="0" name="avgLeads" required />
+        </label>
+        <label>
+          Contact to Lead % goal
+          <input type="number" step="1" min="0" name="contactToLead" required />
+        </label>
+        <label>
+          Contact to Agent % goal
+          <input type="number" step="1" min="0" name="contactToAgent" required />
+        </label>
+        <label>
+          Sent to Lender % goal
+          <input type="number" step="1" min="0" name="sentToLender" required />
+        </label>
+        <menu>
+          <button value="cancel" class="ghost-btn">Cancel</button>
+          <button value="default" class="primary-btn">Save goals</button>
+        </menu>
+      </form>
+    </dialog>
+
+    <dialog id="logEffortDialog" class="modal">
+      <form method="dialog" id="logEffortForm">
+        <h3>Log Effort</h3>
+        <label>
+          Originator
+          <select name="originator" id="logEffortOriginator" required></select>
+        </label>
+        <div class="grid-two">
+          <label>Pulls <input type="number" min="0" name="pulls" required /></label>
+          <label>Contacts <input type="number" min="0" name="contacts" required /></label>
+          <label>Agents <input type="number" min="0" name="agents" required /></label>
+          <label>Lender <input type="number" min="0" name="lender" required /></label>
+        </div>
+        <menu>
+          <button value="cancel" class="ghost-btn">Cancel</button>
+          <button value="default" class="primary-btn">Save effort</button>
+        </menu>
+      </form>
+    </dialog>
+
+    <script src="./script.js"></script>
+  </body>
+</html>
