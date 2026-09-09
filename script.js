@@ -11,10 +11,10 @@ const DEFAULT_ORIGINATORS = [
 ];
 
 const DEFAULT_GOALS = {
-  avgLeads: 12,
-  contactToLead: 90,
-  contactToAgent: 25,
-  sentToLender: 70,
+  pulls: 84,
+  contacts: 76,
+  attachments: 19,
+  lender: 13,
 };
 
 const state = loadState();
@@ -60,13 +60,12 @@ function loadState() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return fallback;
     const parsed = JSON.parse(raw);
+    const originators =
+      Array.isArray(parsed.originators) && parsed.originators.length ? parsed.originators : DEFAULT_ORIGINATORS;
     return {
       currentDate: parsed.currentDate || today,
-      goals: { ...DEFAULT_GOALS, ...(parsed.goals || {}) },
-      originators:
-        Array.isArray(parsed.originators) && parsed.originators.length
-          ? parsed.originators
-          : DEFAULT_ORIGINATORS,
+      goals: normalizeGoals(parsed.goals, originators.length),
+      originators,
       metricsByDate: parsed.metricsByDate && typeof parsed.metricsByDate === 'object' ? parsed.metricsByDate : {},
     };
   } catch {
@@ -116,10 +115,10 @@ function bindEvents() {
   ui.goalsForm.addEventListener('submit', (event) => {
     event.preventDefault();
     const formData = new FormData(ui.goalsForm);
-    state.goals.avgLeads = toNumber(formData.get('avgLeads'));
-    state.goals.contactToLead = toNumber(formData.get('contactToLead'));
-    state.goals.contactToAgent = toNumber(formData.get('contactToAgent'));
-    state.goals.sentToLender = toNumber(formData.get('sentToLender'));
+    state.goals.pulls = clamp(toNumber(formData.get('pulls')));
+    state.goals.contacts = clamp(toNumber(formData.get('contacts')));
+    state.goals.attachments = clamp(toNumber(formData.get('attachments')));
+    state.goals.lender = clamp(toNumber(formData.get('lender')));
     saveState();
     render();
     ui.goalsDialog.close();
@@ -191,12 +190,12 @@ function calculate() {
   const count = state.originators.length || 1;
   const avgLeads = totalPulls / count;
   const contactToLead = totalPulls === 0 ? 0 : (totalContacts / totalPulls) * 100;
-  const contactToAgent = totalContacts === 0 ? 0 : (totalAgents / totalContacts) * 100;
+  const contactToAttachment = totalContacts === 0 ? 0 : (totalAgents / totalContacts) * 100;
   const sentToLender = totalAgents === 0 ? 0 : (totalLender / totalAgents) * 100;
 
   return {
     totals: { totalPulls, totalContacts, totalAgents, totalLender },
-    values: { avgLeads, contactToLead, contactToAgent, sentToLender },
+    values: { avgLeads, contactToLead, contactToAttachment, sentToLender },
   };
 }
 
@@ -204,7 +203,7 @@ function render() {
   const calculated = calculate();
   renderHeader();
   renderTopStats(calculated.values);
-  renderGoals(calculated.values);
+  renderGoals(calculated.totals);
   renderRoster(calculated.totals);
   renderLogEffortSelect();
   saveState();
@@ -223,94 +222,71 @@ function renderTopStats(values) {
     {
       title: 'Average Leads Pulled',
       value: `${values.avgLeads.toFixed(1)}`,
-      goal: state.goals.avgLeads,
-      goalLabel: `${state.goals.avgLeads}`,
-      raw: values.avgLeads,
+      caption: `${state.originators.length || 0} team members tracked`,
     },
     {
       title: 'Contact to Lead %',
       value: `${Math.round(values.contactToLead)}%`,
-      goal: state.goals.contactToLead,
-      goalLabel: `${state.goals.contactToLead}%`,
-      raw: values.contactToLead,
+      caption: 'Contacts compared to leads pulled',
     },
     {
-      title: 'Contact to Agent %',
-      value: `${Math.round(values.contactToAgent)}%`,
-      goal: state.goals.contactToAgent,
-      goalLabel: `${state.goals.contactToAgent}%`,
-      raw: values.contactToAgent,
+      title: 'Contact to Attachment %',
+      value: `${Math.round(values.contactToAttachment)}%`,
+      caption: 'Attachments compared to contacts',
     },
     {
       title: 'Sent to Lender %',
       value: `${Math.round(values.sentToLender)}%`,
-      goal: state.goals.sentToLender,
-      goalLabel: `${state.goals.sentToLender}%`,
-      raw: values.sentToLender,
+      caption: 'Sent to lender compared to attachments',
     },
   ];
 
   ui.topStats.innerHTML = cards
     .map((card) => {
-      const pct = goalProgress(card.raw, card.goal);
       return `
       <article class="card stat-card">
         <p class="stat-title">${card.title}</p>
         <p class="stat-value">${card.value}</p>
-        <p class="goal-text">Goal: ${card.goalLabel}</p>
-        <p class="goal-text">${Math.round(pct)}% of goal</p>
-        <div class="progress" role="progressbar" aria-valuenow="${Math.round(pct)}" aria-valuemin="0" aria-valuemax="100">
-          <span style="width:${Math.min(pct, 100)}%"></span>
-        </div>
+        <p class="goal-text">${card.caption}</p>
       </article>`;
     })
     .join('');
 }
 
-function renderGoals(values) {
+function renderGoals(totals) {
   const goals = [
     {
-      title: 'Average Leads Pulled',
-      value: `${values.avgLeads.toFixed(1)}`,
-      goal: `${state.goals.avgLeads}`,
-      raw: values.avgLeads,
-      goalRaw: state.goals.avgLeads,
-      suffix: '',
+      title: 'Leads Pulled',
+      value: totals.totalPulls,
+      goal: state.goals.pulls,
     },
     {
-      title: 'Contact to Lead %',
-      value: `${Math.round(values.contactToLead)}`,
-      goal: `${state.goals.contactToLead}`,
-      raw: values.contactToLead,
-      goalRaw: state.goals.contactToLead,
-      suffix: '%',
+      title: 'Contacts',
+      value: totals.totalContacts,
+      goal: state.goals.contacts,
     },
     {
-      title: 'Contact to Agent %',
-      value: `${Math.round(values.contactToAgent)}`,
-      goal: `${state.goals.contactToAgent}`,
-      raw: values.contactToAgent,
-      goalRaw: state.goals.contactToAgent,
-      suffix: '%',
+      title: 'Attachments',
+      value: totals.totalAgents,
+      goal: state.goals.attachments,
     },
     {
-      title: 'Sent to Lender %',
-      value: `${Math.round(values.sentToLender)}`,
-      goal: `${state.goals.sentToLender}`,
-      raw: values.sentToLender,
-      goalRaw: state.goals.sentToLender,
-      suffix: '%',
+      title: 'Sent to Lender',
+      value: totals.totalLender,
+      goal: state.goals.lender,
     },
   ];
 
   ui.goalsList.innerHTML = goals
     .map((goal) => {
-      const pct = goalProgress(goal.raw, goal.goalRaw);
+      const pct = goalProgress(goal.value, goal.goal);
       return `
       <section class="goal-item">
         <h3>${goal.title}</h3>
-        <p class="goal-line">${goal.value}${goal.suffix} / Goal ${goal.goal}${goal.suffix}</p>
-        <div class="progress"><span style="width:${Math.min(pct, 100)}%"></span></div>
+        <p class="goal-line"><strong>${goal.goal}</strong> goal · ${goal.value} logged</p>
+        <div class="progress" role="progressbar" aria-label="${goal.title} goal progress" aria-valuenow="${Math.round(pct)}" aria-valuemin="0" aria-valuemax="100">
+          <span style="width:${Math.min(pct, 100)}%"></span>
+        </div>
       </section>`;
     })
     .join('');
@@ -451,10 +427,10 @@ function removeOriginator(id) {
 }
 
 function openGoalsDialog() {
-  ui.goalsForm.avgLeads.value = state.goals.avgLeads;
-  ui.goalsForm.contactToLead.value = state.goals.contactToLead;
-  ui.goalsForm.contactToAgent.value = state.goals.contactToAgent;
-  ui.goalsForm.sentToLender.value = state.goals.sentToLender;
+  ui.goalsForm.pulls.value = state.goals.pulls;
+  ui.goalsForm.contacts.value = state.goals.contacts;
+  ui.goalsForm.attachments.value = state.goals.attachments;
+  ui.goalsForm.lender.value = state.goals.lender;
   ui.goalsDialog.showModal();
 }
 
@@ -527,7 +503,7 @@ function importData(event) {
         throw new Error('Invalid schema');
       }
       state.currentDate = typeof parsed.currentDate === 'string' ? parsed.currentDate : state.currentDate;
-      state.goals = { ...DEFAULT_GOALS, ...(parsed.goals || {}) };
+      state.goals = normalizeGoals(parsed.goals, parsed.originators.length);
       state.originators = parsed.originators;
       state.metricsByDate = parsed.metricsByDate;
       saveState();
@@ -549,4 +525,35 @@ function escapeHtml(input) {
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#39;');
+}
+
+function normalizeGoals(rawGoals, originatorCount) {
+  const goalCount = Math.max(1, clamp(originatorCount));
+  const source = rawGoals && typeof rawGoals === 'object' ? rawGoals : {};
+  const pulls = hasNumber(source.pulls)
+    ? clamp(source.pulls)
+    : hasNumber(source.avgLeads)
+      ? clamp(Math.round(toNumber(source.avgLeads) * goalCount))
+      : DEFAULT_GOALS.pulls;
+  const contacts = hasNumber(source.contacts)
+    ? clamp(source.contacts)
+    : hasNumber(source.contactToLead)
+      ? clamp(Math.round(pulls * (toNumber(source.contactToLead) / 100)))
+      : DEFAULT_GOALS.contacts;
+  const attachments = hasNumber(source.attachments)
+    ? clamp(source.attachments)
+    : hasNumber(source.contactToAgent)
+      ? clamp(Math.round(contacts * (toNumber(source.contactToAgent) / 100)))
+      : DEFAULT_GOALS.attachments;
+  const lender = hasNumber(source.lender)
+    ? clamp(source.lender)
+    : hasNumber(source.sentToLender)
+      ? clamp(Math.round(attachments * (toNumber(source.sentToLender) / 100)))
+      : DEFAULT_GOALS.lender;
+
+  return { pulls, contacts, attachments, lender };
+}
+
+function hasNumber(value) {
+  return Number.isFinite(Number(value));
 }
