@@ -4,6 +4,6 @@ Nocturnals is a dark-themed daily production and performance dashboard for night
 
 ## Run locally
 
-Open `/home/runner/work/Nocturnals-Dashboard/Nocturnals-Dashboard/index.html` in a browser.
+Open `https://ierwin013.github.io/Nocturnals-Dashboard/` in a browser.
 
 All data is persisted in browser `localStorage`.
