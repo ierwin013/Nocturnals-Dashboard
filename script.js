@@ -19,6 +19,7 @@ const DEFAULT_GOALS = {
 };
 
 let state;
+let stopRealtimeSync = null;
 const ui = {
   headerSubtitle: document.getElementById('headerSubtitle'),
   dateInput: document.getElementById('dateInput'),
@@ -58,6 +59,7 @@ function withCacheBust(url) {
   bindEvents();
   initializeDate();
   render();
+  initializeRealtimeSync();
 })();
 
 async function loadState() {
@@ -69,6 +71,17 @@ async function loadState() {
     metricsByDate: {},
     teamRecords: [],
   };
+
+  if (window.firebaseSync?.initialize) {
+    const remoteState = await window.firebaseSync.initialize({
+      storageKey: STORAGE_KEY,
+      defaultState: fallback,
+    });
+
+    if (remoteState) {
+      return buildState(JSON.stringify(remoteState), today);
+    }
+  }
 
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -82,7 +95,13 @@ async function loadState() {
   try {
     const response = await fetch(withCacheBust(DATA_FILE_URL), { cache: 'no-store' });
     if (response.ok) {
-      return buildState(await response.text(), today);
+      const raw = await response.text();
+      try {
+        localStorage.setItem(STORAGE_KEY, raw);
+      } catch (err) {
+        console.log('localStorage error');
+      }
+      return buildState(raw, today);
     }
   } catch (err) {
     console.log('data.json not found or error loading, using defaults');
@@ -106,7 +125,27 @@ function buildState(rawState, today) {
 }
 
 function saveState() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  if (window.firebaseSync?.saveState) {
+    window.firebaseSync.saveState(state);
+    return;
+  }
+
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch (err) {
+    console.log('localStorage error');
+  }
+}
+
+function initializeRealtimeSync() {
+  if (!window.firebaseSync?.isRealtimeEnabled || !window.firebaseSync.isRealtimeEnabled()) return;
+  if (stopRealtimeSync) stopRealtimeSync();
+
+  stopRealtimeSync = window.firebaseSync.subscribe((remoteState) => {
+    if (!remoteState || typeof remoteState !== 'object') return;
+    state = buildState(JSON.stringify(remoteState), state.currentDate || getTodayISO());
+    render();
+  });
 }
 
 function getTodayISO() {

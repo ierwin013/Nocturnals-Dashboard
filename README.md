@@ -6,7 +6,27 @@ Nocturnals is a dark-themed daily production and performance dashboard for night
 
 Open `https://ierwin013.github.io/Nocturnals-Dashboard/` in a browser.
 
-Dashboard edits are stored in that browser's `localStorage`. The bundled `data.json` file is only used as a starting snapshot when no local dashboard data exists yet.
+Dashboard edits are saved to Firebase Realtime Database when Firebase is configured, with localStorage retained as offline fallback. If Firebase is unavailable or not configured, the dashboard continues in localStorage-only mode. The bundled `data.json` file is still used as a starting snapshot when no saved dashboard data exists yet.
+
+## Enable real-time sync (Firebase Realtime Database)
+
+1. Create a Firebase project and enable **Realtime Database**.
+2. In your page bootstrap (before `script.js` runs), define `window.__FIREBASE_CONFIG` with your Firebase web app config:
+
+```html
+<script>
+  window.__FIREBASE_CONFIG = {
+    apiKey: '...',
+    authDomain: '...',
+    databaseURL: '...',
+    projectId: '...',
+    appId: '...'
+  };
+  window.__FIREBASE_DB_PATH = 'nocturnals-dashboard/state'; // optional override
+</script>
+```
+
+When configured, dashboard changes (goals, roster, records, metrics) sync through Firebase in real time to all connected clients, while still writing to localStorage for graceful offline behavior.
 
 ## Deployment and cache behavior
 
