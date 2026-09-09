@@ -20,7 +20,7 @@ const DEFAULT_GOALS = {
 const state = loadState();
 const ui = {
   headerSubtitle: document.getElementById('headerSubtitle'),
-  dateLabel: document.getElementById('dateLabel'),
+  dateInput: document.getElementById('dateInput'),
   topStats: document.getElementById('topStats'),
   goalsList: document.getElementById('goalsList'),
   rosterBody: document.getElementById('rosterBody'),
@@ -42,6 +42,7 @@ const ui = {
 let editOriginatorId = null;
 
 bindEvents();
+initializeDate();
 render();
 
 function loadState() {
@@ -60,7 +61,7 @@ function loadState() {
     const originators =
       Array.isArray(parsed.originators) && parsed.originators.length ? parsed.originators : DEFAULT_ORIGINATORS;
     return {
-      currentDate: parsed.currentDate || today,
+      currentDate: today,
       goals: normalizeGoals(parsed.goals, originators.length),
       originators,
       metricsByDate: parsed.metricsByDate && typeof parsed.metricsByDate === 'object' ? parsed.metricsByDate : {},
@@ -75,12 +76,34 @@ function saveState() {
 }
 
 function getTodayISO() {
-  return toISODate(new Date());
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Chicago',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date());
+  const year = parts.find((part) => part.type === 'year')?.value;
+  const month = parts.find((part) => part.type === 'month')?.value;
+  const day = parts.find((part) => part.type === 'day')?.value;
+  return `${year}-${month}-${day}`;
+}
+
+function initializeDate() {
+  if (!ui.dateInput.value) {
+    ui.dateInput.value = state.currentDate;
+  }
+  state.currentDate = ui.dateInput.value;
 }
 
 function bindEvents() {
   ui.prevDayBtn.addEventListener('click', () => changeDate(-1));
   ui.nextDayBtn.addEventListener('click', () => changeDate(1));
+  ui.dateInput.addEventListener('change', () => {
+    if (!ui.dateInput.value) return;
+    state.currentDate = ui.dateInput.value;
+    saveState();
+    render();
+  });
   ui.addOriginatorBtn.addEventListener('click', openAddOriginatorDialog);
   ui.editGoalsBtn.addEventListener('click', openGoalsDialog);
   ui.logEffortBtn.addEventListener('click', openLogEffortDialog);
@@ -210,9 +233,8 @@ function render() {
 function renderHeader() {
   const date = parseISODate(state.currentDate);
   const full = date.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' });
-  const short = date.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
   ui.headerSubtitle.textContent = `Individual Daily Stats for ${full}.`;
-  ui.dateLabel.textContent = short;
+  ui.dateInput.value = state.currentDate;
 }
 
 function renderTopStats(values) {
