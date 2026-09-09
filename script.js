@@ -41,9 +41,11 @@ const ui = {
   logEffortOriginator: document.getElementById('logEffortOriginator'),
   teamRecordDialog: document.getElementById('teamRecordDialog'),
   teamRecordForm: document.getElementById('teamRecordForm'),
+  teamRecordDialogTitle: document.getElementById('teamRecordDialogTitle'),
 };
 
 let editOriginatorId = null;
+let editTeamRecordId = null;
 
 bindEvents();
 initializeDate();
@@ -177,8 +179,19 @@ function bindEvents() {
     const recordBroke = String(formData.get('recordBroke') || '').trim();
     const recordNumber = clamp(toNumber(formData.get('recordNumber')));
     if (!originatorName || !recordBroke) return;
-    const id = `r-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
-    state.teamRecords.push({ id, originatorName, recordBroke, recordNumber });
+
+    if (editTeamRecordId) {
+      const target = state.teamRecords.find((record) => record.id === editTeamRecordId);
+      if (target) {
+        target.originatorName = originatorName;
+        target.recordBroke = recordBroke;
+        target.recordNumber = recordNumber;
+      }
+    } else {
+      const id = `r-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+      state.teamRecords.push({ id, originatorName, recordBroke, recordNumber });
+    }
+
     saveState();
     render();
     ui.teamRecordDialog.close();
@@ -511,26 +524,66 @@ function openLogEffortDialog() {
 }
 
 function openAddTeamRecordDialog() {
+  editTeamRecordId = null;
+  ui.teamRecordDialogTitle.textContent = 'Add Team Record';
   ui.teamRecordForm.reset();
+  ui.teamRecordDialog.showModal();
+}
+
+function openEditTeamRecordDialog(id) {
+  const teamRecord = state.teamRecords.find((record) => record.id === id);
+  if (!teamRecord) return;
+  editTeamRecordId = id;
+  ui.teamRecordDialogTitle.textContent = 'Edit Team Record';
+  ui.teamRecordForm.originatorName.value = teamRecord.originatorName;
+  ui.teamRecordForm.recordBroke.value = teamRecord.recordBroke;
+  ui.teamRecordForm.recordNumber.value = clamp(teamRecord.recordNumber);
   ui.teamRecordDialog.showModal();
 }
 
 function renderTeamRecords() {
   if (!state.teamRecords.length) {
-    ui.teamRecordsBody.innerHTML = '<tr><td colspan="3" class="empty-row">No team records yet.</td></tr>';
+    ui.teamRecordsBody.innerHTML = '<tr><td colspan="4" class="empty-row">No team records yet.</td></tr>';
     return;
   }
 
   ui.teamRecordsBody.innerHTML = state.teamRecords
     .map((record) => {
       return `
-      <tr>
+      <tr data-id="${record.id}">
         <td>${escapeHtml(record.originatorName)}</td>
         <td>${escapeHtml(record.recordBroke)}</td>
         <td>${clamp(record.recordNumber)}</td>
+        <td>
+          <button class="icon-btn" type="button" data-action="edit-team-record" aria-label="Edit ${escapeHtml(record.originatorName)} record">✎</button>
+          <button class="icon-btn" type="button" data-action="remove-team-record" aria-label="Remove ${escapeHtml(record.originatorName)} record">✕</button>
+        </td>
       </tr>`;
     })
     .join('');
+
+  ui.teamRecordsBody.querySelectorAll('button[data-action="edit-team-record"]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const id = button.closest('tr')?.dataset.id;
+      if (id) openEditTeamRecordDialog(id);
+    });
+  });
+
+  ui.teamRecordsBody.querySelectorAll('button[data-action="remove-team-record"]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const id = button.closest('tr')?.dataset.id;
+      if (id) removeTeamRecord(id);
+    });
+  });
+}
+
+function removeTeamRecord(id) {
+  const target = state.teamRecords.find((record) => record.id === id);
+  if (!target) return;
+  if (!window.confirm(`Remove ${target.originatorName}'s "${target.recordBroke}" record?`)) return;
+  state.teamRecords = state.teamRecords.filter((record) => record.id !== id);
+  saveState();
+  render();
 }
 
 function clamp(value) {
