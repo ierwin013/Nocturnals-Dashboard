@@ -20,6 +20,24 @@ GitHub Pages can read the shared `data.json` file directly, but writing back to 
 
 When `data.json` changes on `main`, `.github/workflows/commit-data.yml` adds an `updatedAt` timestamp to the file and creates a follow-up commit with a UTC timestamp in the commit message.
 
+## Deployment and cache behavior
+
+- **Active deploy mechanism:** GitHub Pages should use **Deploy from a branch** with **`main` / (root)**.
+- **Live URL:** `https://ierwin013.github.io/Nocturnals-Dashboard/`
+- **Single publish path:** This repo does not include a Pages artifact/`gh-pages` deploy workflow. `.nojekyll` is included so root static files are served directly.
+- **Cache-busting behavior:**
+  - `index.html` adds no-cache meta directives.
+  - `styles.css` and `script.js` are requested with a timestamp query string on each load.
+  - `data.json` fetches use a timestamp query string plus `cache: 'no-store'` to reduce stale shared data views.
+- **Workflow hygiene:** `commit-data.yml` uses `if: github.actor != 'github-actions[bot]'` to avoid recursive commit loops.
+
+### Post-merge verification
+
+1. Open the live URL and do a **hard refresh**.
+2. Open the same URL in an **incognito/private** window.
+3. Make a shared update and confirm the latest `updatedAt` timestamp in `data.json` changes on `main`.
+4. Confirm roster/team-record updates appear quickly and that views are not stale due to cached assets/data.
+
 ### Security notes
 
 - Never commit a token into the repository.

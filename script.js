@@ -60,6 +60,10 @@ const ui = {
 let editOriginatorId = null;
 let editTeamRecordId = null;
 
+function withCacheBust(url) {
+  return `${url}${url.includes('?') ? '&' : '?'}v=${Date.now()}`;
+}
+
 // Initialize on page load
 (async () => {
   state = await loadState();
@@ -83,7 +87,7 @@ async function loadState() {
 
   try {
     // Try to load from data.json first (shared data)
-    const response = await fetch(DATA_FILE_URL);
+    const response = await fetch(withCacheBust(DATA_FILE_URL), { cache: 'no-store' });
     if (response.ok) {
       const parsed = await response.json();
       const originators =
@@ -212,7 +216,7 @@ async function saveToGitHub() {
 
 async function refreshData() {
   try {
-    const response = await fetch(DATA_FILE_URL + '?t=' + Date.now()); // Cache bust
+    const response = await fetch(withCacheBust(DATA_FILE_URL), { cache: 'no-store' });
     if (response.ok) {
       const latest = await response.json();
       // Update state without losing current date or local changes
