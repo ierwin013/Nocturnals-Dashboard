@@ -259,6 +259,7 @@ table {
   width: 100%;
   min-width: 860px;
   border-collapse: collapse;
+  table-layout: fixed;
 }
 
 th,
@@ -273,6 +274,23 @@ th {
   font-size: 0.78rem;
   color: var(--muted);
   text-align: left;
+}
+
+th:first-child,
+td:first-child {
+  width: 34%;
+}
+
+th:nth-child(n + 2):nth-child(-n + 5),
+td:nth-child(n + 2):nth-child(-n + 5) {
+  width: 14%;
+  text-align: center;
+}
+
+th:last-child,
+td:last-child {
+  width: 10%;
+  text-align: right;
 }
 
 .originator {
@@ -308,6 +326,7 @@ th {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
+  justify-content: center;
 }
 
 .step-btn {

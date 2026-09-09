@@ -340,7 +340,7 @@ function renderRoster(totals) {
     'beforeend',
     `
       <tr class="team-total-row">
-        <td><strong>Team Total</strong></td>
+        <td><strong>Team Totals</strong></td>
         <td><strong>${totals.totalPulls}</strong></td>
         <td><strong>${totals.totalContacts}</strong></td>
         <td><strong>${totals.totalAgents}</strong></td>
