@@ -195,22 +195,6 @@ h2 {
   font-size: 0.9rem;
 }
 
-.progress {
-  margin-top: 0.6rem;
-  height: 0.54rem;
-  border-radius: 999px;
-  overflow: hidden;
-  background: rgba(181, 199, 232, 0.13);
-}
-
-.progress > span {
-  display: block;
-  height: 100%;
-  border-radius: inherit;
-  background: linear-gradient(90deg, #93b6ec, #738fc0);
-  transition: width 0.35s ease;
-}
-
 .main-grid {
   display: block;
 }
