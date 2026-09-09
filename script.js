@@ -205,7 +205,7 @@ function render() {
   renderHeader();
   renderTopStats(calculated.values);
   renderGoals(calculated.values);
-  renderRoster();
+  renderRoster(calculated.totals);
   renderLogEffortSelect();
   saveState();
 }
@@ -316,7 +316,7 @@ function renderGoals(values) {
     .join('');
 }
 
-function renderRoster() {
+function renderRoster(totals) {
   const metrics = getDateMetrics(state.currentDate);
   ui.rosterBody.innerHTML = state.originators
     .map((originator) => {
@@ -344,6 +344,19 @@ function renderRoster() {
     })
     .join('');
 
+  ui.rosterBody.insertAdjacentHTML(
+    'beforeend',
+    `
+      <tr class="team-total-row">
+        <td><strong>Team Total</strong></td>
+        <td><strong>${totals.totalPulls}</strong></td>
+        <td><strong>${totals.totalContacts}</strong></td>
+        <td><strong>${totals.totalAgents}</strong></td>
+        <td><strong>${totals.totalLender}</strong></td>
+        <td></td>
+      </tr>`
+  );
+
   ui.rosterBody.querySelectorAll('button[data-metric]').forEach((button) => {
     button.addEventListener('click', () => {
       const row = button.closest('tr');
@@ -352,6 +365,16 @@ function renderRoster() {
       const delta = Number(button.dataset.delta);
       if (!id || !metric || Number.isNaN(delta)) return;
       updateMetric(id, metric, delta);
+    });
+  });
+
+  ui.rosterBody.querySelectorAll('input[data-metric]').forEach((input) => {
+    input.addEventListener('change', () => {
+      const row = input.closest('tr');
+      const id = row?.dataset.id;
+      const metric = input.dataset.metric;
+      if (!id || !metric) return;
+      updateMetricValue(id, metric, input.value);
     });
   });
 
@@ -374,7 +397,7 @@ function renderStepper(metric, value) {
   return `
   <div class="stepper">
     <button type="button" class="step-btn" data-metric="${metric}" data-delta="-1">−</button>
-    <span class="metric">${clamp(value)}</span>
+    <input class="metric-input" type="number" min="0" step="1" inputmode="numeric" data-metric="${metric}" value="${clamp(value)}" aria-label="${metric}" />
     <button type="button" class="step-btn" data-metric="${metric}" data-delta="1">+</button>
   </div>`;
 }
@@ -383,6 +406,14 @@ function updateMetric(originatorId, metric, delta) {
   const metrics = getDateMetrics(state.currentDate);
   if (!metrics[originatorId]) metrics[originatorId] = emptyMetrics();
   metrics[originatorId][metric] = clamp((metrics[originatorId][metric] || 0) + delta);
+  saveState();
+  render();
+}
+
+function updateMetricValue(originatorId, metric, rawValue) {
+  const metrics = getDateMetrics(state.currentDate);
+  if (!metrics[originatorId]) metrics[originatorId] = emptyMetrics();
+  metrics[originatorId][metric] = clamp(toNumber(rawValue));
   saveState();
   render();
 }
