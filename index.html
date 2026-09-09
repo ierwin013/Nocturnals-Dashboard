@@ -23,6 +23,8 @@
         </div>
         <div class="header-actions">
           <button id="logEffortBtn" class="primary-btn">+ Log effort</button>
+          <button id="openGitHubSetupBtn" class="ghost-btn" type="button">Shared Sync</button>
+          <p id="syncStatus" class="status-note" role="status" aria-live="polite"></p>
         </div>
       </header>
 
@@ -181,6 +183,38 @@
         <menu>
           <button value="cancel" class="ghost-btn">Cancel</button>
           <button value="default" class="primary-btn">Save record</button>
+        </menu>
+      </form>
+    </dialog>
+
+    <dialog id="githubSetupDialog" class="modal">
+      <form method="dialog" id="githubSetupForm">
+        <h3>Shared Sync Setup</h3>
+        <p class="modal-copy">
+          To save shared dashboard updates back to <code>data.json</code>, use a fine-grained GitHub personal access
+          token with Contents read and write access to this repository only.
+        </p>
+        <label>
+          GitHub token
+          <input
+            id="githubTokenInput"
+            name="githubToken"
+            type="password"
+            autocomplete="off"
+            spellcheck="false"
+            placeholder="github_pat_..."
+            required
+          />
+        </label>
+        <label class="checkbox-row">
+          <input id="githubRememberToken" name="rememberToken" type="checkbox" />
+          Remember on this device
+        </label>
+        <p id="githubSetupMessage" class="status-note" role="status" aria-live="polite"></p>
+        <menu>
+          <button id="clearGitHubTokenBtn" type="button" class="ghost-btn">Remove token</button>
+          <button value="cancel" class="ghost-btn">Close</button>
+          <button value="default" class="primary-btn">Save token</button>
         </menu>
       </form>
     </dialog>

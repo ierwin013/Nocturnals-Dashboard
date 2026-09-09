@@ -91,6 +91,26 @@ h2 {
   gap: 0.65rem;
 }
 
+.status-note {
+  margin: 0;
+  max-width: 20rem;
+  color: var(--muted);
+  font-size: 0.84rem;
+  text-align: right;
+}
+
+.status-ready {
+  color: #b4efc4;
+}
+
+.status-warning {
+  color: #f2d58c;
+}
+
+.status-error {
+  color: var(--danger);
+}
+
 .primary-btn,
 .ghost-btn,
 .nav-btn,
@@ -420,11 +440,31 @@ td:last-child {
   font-size: 1.7rem;
 }
 
+.modal-copy {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.modal-copy code {
+  color: #dce6fb;
+}
+
 label {
   display: grid;
   gap: 0.3rem;
   color: var(--muted);
   font-size: 0.92rem;
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.checkbox-row input {
+  width: auto;
 }
 
 input,
@@ -469,6 +509,10 @@ menu {
 
   .header-actions {
     align-items: flex-start;
+  }
+
+  .status-note {
+    text-align: left;
   }
 
   .stats-grid {
