@@ -110,8 +110,8 @@
           <input id="originatorSubtitle" name="subtitle" maxlength="60" />
         </label>
         <menu>
-          <button value="cancel" class="ghost-btn">Cancel</button>
-          <button id="originatorSaveBtn" value="default" class="primary-btn">Save</button>
+          <button type="button" value="cancel" class="ghost-btn" data-dialog-action="cancel">Cancel</button>
+          <button type="submit" id="originatorSaveBtn" value="default" class="primary-btn" data-dialog-action="save">Save</button>
         </menu>
       </form>
     </dialog>
@@ -136,8 +136,8 @@
           <input type="number" step="1" min="0" name="lender" required />
         </label>
         <menu>
-          <button value="cancel" class="ghost-btn">Cancel</button>
-          <button value="default" class="primary-btn">Save goals</button>
+          <button type="button" value="cancel" class="ghost-btn" data-dialog-action="cancel">Cancel</button>
+          <button type="submit" value="default" class="primary-btn" data-dialog-action="save">Save goals</button>
         </menu>
       </form>
     </dialog>
@@ -156,8 +156,8 @@
           <label>Sent to Lender <input type="number" min="0" name="lender" required /></label>
         </div>
         <menu>
-          <button value="cancel" class="ghost-btn">Cancel</button>
-          <button value="default" class="primary-btn">Save effort</button>
+          <button type="button" value="cancel" class="ghost-btn" data-dialog-action="cancel">Cancel</button>
+          <button type="submit" value="default" class="primary-btn" data-dialog-action="save">Save effort</button>
         </menu>
       </form>
     </dialog>
@@ -178,8 +178,8 @@
           <input type="number" min="0" step="1" name="recordNumber" required />
         </label>
         <menu>
-          <button value="cancel" class="ghost-btn">Cancel</button>
-          <button value="default" class="primary-btn">Save record</button>
+          <button type="button" value="cancel" class="ghost-btn" data-dialog-action="cancel">Cancel</button>
+          <button type="submit" value="default" class="primary-btn" data-dialog-action="save">Save record</button>
         </menu>
       </form>
     </dialog>

@@ -117,9 +117,16 @@ function bindEvents() {
   ui.addTeamRecordBtn.addEventListener('click', openAddTeamRecordDialog);
   ui.editGoalsBtn.addEventListener('click', openGoalsDialog);
   ui.logEffortBtn.addEventListener('click', openLogEffortDialog);
+  document.querySelectorAll('[data-dialog-action="cancel"]').forEach((button) => {
+    button.addEventListener('click', () => {
+      closeDialog(button.closest('dialog'), 'cancel');
+    });
+  });
+  ui.originatorDialog.addEventListener('close', resetOriginatorDialog);
 
   ui.originatorForm.addEventListener('submit', (event) => {
     event.preventDefault();
+    if (!isSaveSubmit(event)) return;
     const formData = new FormData(ui.originatorForm);
     const name = String(formData.get('name') || '').trim();
     const initials = String(formData.get('initials') || '').trim().toUpperCase();
@@ -145,6 +152,7 @@ function bindEvents() {
 
   ui.goalsForm.addEventListener('submit', (event) => {
     event.preventDefault();
+    if (!isSaveSubmit(event)) return;
     const formData = new FormData(ui.goalsForm);
     state.goals.pulls = clamp(toNumber(formData.get('pulls')));
     state.goals.contacts = clamp(toNumber(formData.get('contacts')));
@@ -157,6 +165,7 @@ function bindEvents() {
 
   ui.logEffortForm.addEventListener('submit', (event) => {
     event.preventDefault();
+    if (!isSaveSubmit(event)) return;
     const formData = new FormData(ui.logEffortForm);
     const id = String(formData.get('originator') || '');
     const metrics = getDateMetrics(state.currentDate);
@@ -172,6 +181,7 @@ function bindEvents() {
 
   ui.teamRecordForm.addEventListener('submit', (event) => {
     event.preventDefault();
+    if (!isSaveSubmit(event)) return;
     const formData = new FormData(ui.teamRecordForm);
     const originatorName = String(formData.get('originatorName') || '').trim();
     const recordBroke = String(formData.get('recordBroke') || '').trim();
@@ -183,6 +193,20 @@ function bindEvents() {
     render();
     ui.teamRecordDialog.close();
   });
+}
+
+function isSaveSubmit(event) {
+  return event.submitter?.dataset.dialogAction !== 'cancel';
+}
+
+function closeDialog(dialog, returnValue = '') {
+  if (dialog?.open) dialog.close(returnValue);
+}
+
+function resetOriginatorDialog() {
+  editOriginatorId = null;
+  ui.originatorDialogTitle.textContent = 'Add Originator';
+  ui.originatorForm.reset();
 }
 
 function changeDate(delta) {
