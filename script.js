@@ -412,10 +412,10 @@ function renderGoals(totals) {
 function renderRoster(totals) {
   const metrics = getDateMetrics(state.currentDate);
   ui.rosterBody.innerHTML = state.originators
-    .map((originator) => {
+    .map((originator, index) => {
       const personMetrics = metrics[originator.id] || emptyMetrics();
       return `
-      <tr data-id="${originator.id}">
+      <tr data-index="${index}">
         <td>
           <div class="originator">
             <span class="avatar">${escapeHtml(originator.initials || '--')}</span>
@@ -453,7 +453,8 @@ function renderRoster(totals) {
   ui.rosterBody.querySelectorAll('button[data-metric]').forEach((button) => {
     button.addEventListener('click', () => {
       const row = button.closest('tr');
-      const id = row?.dataset.id;
+      const index = Number(row?.dataset.index);
+      const id = Number.isInteger(index) ? state.originators[index]?.id : '';
       const metric = button.dataset.metric;
       const delta = Number(button.dataset.delta);
       if (!id || !metric || Number.isNaN(delta)) return;
@@ -464,7 +465,8 @@ function renderRoster(totals) {
   ui.rosterBody.querySelectorAll('input[data-metric]').forEach((input) => {
     input.addEventListener('change', () => {
       const row = input.closest('tr');
-      const id = row?.dataset.id;
+      const index = Number(row?.dataset.index);
+      const id = Number.isInteger(index) ? state.originators[index]?.id : '';
       const metric = input.dataset.metric;
       if (!id || !metric) return;
       updateMetricValue(id, metric, input.value);
@@ -473,14 +475,16 @@ function renderRoster(totals) {
 
   ui.rosterBody.querySelectorAll('button[data-action="edit"]').forEach((button) => {
     button.addEventListener('click', () => {
-      const id = button.closest('tr')?.dataset.id;
+      const index = Number(button.closest('tr')?.dataset.index);
+      const id = Number.isInteger(index) ? state.originators[index]?.id : '';
       if (id) openEditOriginatorDialog(id);
     });
   });
 
   ui.rosterBody.querySelectorAll('button[data-action="remove"]').forEach((button) => {
     button.addEventListener('click', () => {
-      const id = button.closest('tr')?.dataset.id;
+      const index = Number(button.closest('tr')?.dataset.index);
+      const id = Number.isInteger(index) ? state.originators[index]?.id : '';
       if (id) removeOriginator(id);
     });
   });
@@ -553,7 +557,7 @@ function openGoalsDialog() {
 
 function renderLogEffortSelect() {
   ui.logEffortOriginator.innerHTML = state.originators
-    .map((originator) => `<option value="${originator.id}">${escapeHtml(originator.name)}</option>`)
+    .map((originator) => `<option value="${escapeHtml(originator.id)}">${escapeHtml(originator.name)}</option>`)
     .join('');
 }
 
@@ -609,9 +613,9 @@ function renderTeamRecords() {
   }
 
   ui.teamRecordsBody.innerHTML = state.teamRecords
-    .map((record) => {
+    .map((record, index) => {
       return `
-      <tr data-id="${record.id}">
+      <tr data-index="${index}">
         <td>${escapeHtml(record.originatorName)}</td>
         <td>${escapeHtml(record.recordBroke)}</td>
         <td>${clamp(record.recordNumber)}</td>
@@ -625,14 +629,16 @@ function renderTeamRecords() {
 
   ui.teamRecordsBody.querySelectorAll('button[data-action="edit-team-record"]').forEach((button) => {
     button.addEventListener('click', () => {
-      const id = button.closest('tr')?.dataset.id;
+      const index = Number(button.closest('tr')?.dataset.index);
+      const id = Number.isInteger(index) ? state.teamRecords[index]?.id : '';
       if (id) openEditTeamRecordDialog(id);
     });
   });
 
   ui.teamRecordsBody.querySelectorAll('button[data-action="remove-team-record"]').forEach((button) => {
     button.addEventListener('click', () => {
-      const id = button.closest('tr')?.dataset.id;
+      const index = Number(button.closest('tr')?.dataset.index);
+      const id = Number.isInteger(index) ? state.teamRecords[index]?.id : '';
       if (id) removeTeamRecord(id);
     });
   });
