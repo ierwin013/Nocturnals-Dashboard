@@ -28,9 +28,6 @@ const ui = {
   nextDayBtn: document.getElementById('nextDayBtn'),
   addOriginatorBtn: document.getElementById('addOriginatorBtn'),
   editGoalsBtn: document.getElementById('editGoalsBtn'),
-  exportBtn: document.getElementById('exportBtn'),
-  importBtn: document.getElementById('importBtn'),
-  importInput: document.getElementById('importInput'),
   logEffortBtn: document.getElementById('logEffortBtn'),
   originatorDialog: document.getElementById('originatorDialog'),
   originatorForm: document.getElementById('originatorForm'),
@@ -86,9 +83,6 @@ function bindEvents() {
   ui.nextDayBtn.addEventListener('click', () => changeDate(1));
   ui.addOriginatorBtn.addEventListener('click', openAddOriginatorDialog);
   ui.editGoalsBtn.addEventListener('click', openGoalsDialog);
-  ui.exportBtn.addEventListener('click', exportData);
-  ui.importBtn.addEventListener('click', () => ui.importInput.click());
-  ui.importInput.addEventListener('change', importData);
   ui.logEffortBtn.addEventListener('click', openLogEffortDialog);
 
   ui.originatorForm.addEventListener('submit', (event) => {
@@ -483,43 +477,6 @@ function clamp(value) {
 function toNumber(value) {
   const numeric = Number(value);
   return Number.isFinite(numeric) ? numeric : 0;
-}
-
-function exportData() {
-  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = `nocturnals-backup-${state.currentDate}.json`;
-  link.click();
-  URL.revokeObjectURL(url);
-}
-
-function importData(event) {
-  const [file] = event.target.files || [];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = () => {
-    try {
-      const parsed = JSON.parse(String(reader.result || '{}'));
-      if (!parsed || typeof parsed !== 'object') throw new Error('Invalid data');
-      if (!Array.isArray(parsed.originators) || typeof parsed.metricsByDate !== 'object') {
-        throw new Error('Invalid schema');
-      }
-      state.currentDate = typeof parsed.currentDate === 'string' ? parsed.currentDate : state.currentDate;
-      state.goals = normalizeGoals(parsed.goals, parsed.originators.length);
-      state.originators = parsed.originators;
-      state.metricsByDate = parsed.metricsByDate;
-      saveState();
-      render();
-      alert('Dashboard data imported.');
-    } catch {
-      alert('Could not import file.');
-    } finally {
-      ui.importInput.value = '';
-    }
-  };
-  reader.readAsText(file);
 }
 
 function escapeHtml(input) {
