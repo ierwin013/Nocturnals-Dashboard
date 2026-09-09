@@ -91,11 +91,6 @@ h2 {
   gap: 0.65rem;
 }
 
-.secondary-actions {
-  display: flex;
-  gap: 0.5rem;
-}
-
 .primary-btn,
 .ghost-btn,
 .nav-btn,
@@ -437,10 +432,6 @@ menu {
 
   .header-actions {
     align-items: flex-start;
-  }
-
-  .secondary-actions {
-    flex-wrap: wrap;
   }
 
   .stats-grid {
