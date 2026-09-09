@@ -48,7 +48,7 @@ bindEvents();
 render();
 
 function loadState() {
-  const today = '2026-09-08';
+  const today = getTodayISO();
   const fallback = {
     currentDate: today,
     goals: { ...DEFAULT_GOALS },
@@ -75,6 +75,10 @@ function loadState() {
 
 function saveState() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+function getTodayISO() {
+  return toISODate(new Date());
 }
 
 function bindEvents() {
