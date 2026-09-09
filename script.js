@@ -19,6 +19,7 @@ const DEFAULT_GOALS = {
 };
 
 let state;
+let stopRealtimeSync = null;
 const ui = {
   headerSubtitle: document.getElementById('headerSubtitle'),
   dateInput: document.getElementById('dateInput'),
@@ -58,6 +59,7 @@ function withCacheBust(url) {
   bindEvents();
   initializeDate();
   render();
+  initializeRealtimeSync();
 })();
 
 async function loadState() {
@@ -69,6 +71,17 @@ async function loadState() {
     metricsByDate: {},
     teamRecords: [],
   };
+
+  if (window.firebaseSync?.initialize) {
+    const remoteState = await window.firebaseSync.initialize({
+      storageKey: STORAGE_KEY,
+      defaultState: fallback,
+    });
+
+    if (remoteState) {
+      return buildState(JSON.stringify(remoteState), today);
+    }
+  }
 
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -82,7 +95,13 @@ async function loadState() {
   try {
     const response = await fetch(withCacheBust(DATA_FILE_URL), { cache: 'no-store' });
     if (response.ok) {
-      return buildState(await response.text(), today);
+      const raw = await response.text();
+      try {
+        localStorage.setItem(STORAGE_KEY, raw);
+      } catch (err) {
+        console.log('localStorage error');
+      }
+      return buildState(raw, today);
     }
   } catch (err) {
     console.log('data.json not found or error loading, using defaults');
@@ -106,7 +125,27 @@ function buildState(rawState, today) {
 }
 
 function saveState() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  if (window.firebaseSync?.saveState) {
+    window.firebaseSync.saveState(state);
+    return;
+  }
+
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch (err) {
+    console.log('localStorage error');
+  }
+}
+
+function initializeRealtimeSync() {
+  if (!window.firebaseSync?.isRealtimeEnabled || !window.firebaseSync.isRealtimeEnabled()) return;
+  if (stopRealtimeSync) stopRealtimeSync();
+
+  stopRealtimeSync = window.firebaseSync.subscribe((remoteState) => {
+    if (!remoteState || typeof remoteState !== 'object') return;
+    state = buildState(JSON.stringify(remoteState), state.currentDate || getTodayISO());
+    render();
+  });
 }
 
 function getTodayISO() {
@@ -373,10 +412,10 @@ function renderGoals(totals) {
 function renderRoster(totals) {
   const metrics = getDateMetrics(state.currentDate);
   ui.rosterBody.innerHTML = state.originators
-    .map((originator) => {
+    .map((originator, index) => {
       const personMetrics = metrics[originator.id] || emptyMetrics();
       return `
-      <tr data-id="${originator.id}">
+      <tr data-index="${index}">
         <td>
           <div class="originator">
             <span class="avatar">${escapeHtml(originator.initials || '--')}</span>
@@ -414,7 +453,8 @@ function renderRoster(totals) {
   ui.rosterBody.querySelectorAll('button[data-metric]').forEach((button) => {
     button.addEventListener('click', () => {
       const row = button.closest('tr');
-      const id = row?.dataset.id;
+      const index = Number(row?.dataset.index);
+      const id = Number.isInteger(index) ? state.originators[index]?.id : '';
       const metric = button.dataset.metric;
       const delta = Number(button.dataset.delta);
       if (!id || !metric || Number.isNaN(delta)) return;
@@ -425,7 +465,8 @@ function renderRoster(totals) {
   ui.rosterBody.querySelectorAll('input[data-metric]').forEach((input) => {
     input.addEventListener('change', () => {
       const row = input.closest('tr');
-      const id = row?.dataset.id;
+      const index = Number(row?.dataset.index);
+      const id = Number.isInteger(index) ? state.originators[index]?.id : '';
       const metric = input.dataset.metric;
       if (!id || !metric) return;
       updateMetricValue(id, metric, input.value);
@@ -434,14 +475,16 @@ function renderRoster(totals) {
 
   ui.rosterBody.querySelectorAll('button[data-action="edit"]').forEach((button) => {
     button.addEventListener('click', () => {
-      const id = button.closest('tr')?.dataset.id;
+      const index = Number(button.closest('tr')?.dataset.index);
+      const id = Number.isInteger(index) ? state.originators[index]?.id : '';
       if (id) openEditOriginatorDialog(id);
     });
   });
 
   ui.rosterBody.querySelectorAll('button[data-action="remove"]').forEach((button) => {
     button.addEventListener('click', () => {
-      const id = button.closest('tr')?.dataset.id;
+      const index = Number(button.closest('tr')?.dataset.index);
+      const id = Number.isInteger(index) ? state.originators[index]?.id : '';
       if (id) removeOriginator(id);
     });
   });
@@ -514,7 +557,7 @@ function openGoalsDialog() {
 
 function renderLogEffortSelect() {
   ui.logEffortOriginator.innerHTML = state.originators
-    .map((originator) => `<option value="${originator.id}">${escapeHtml(originator.name)}</option>`)
+    .map((originator) => `<option value="${escapeHtml(originator.id)}">${escapeHtml(originator.name)}</option>`)
     .join('');
 }
 
@@ -570,9 +613,9 @@ function renderTeamRecords() {
   }
 
   ui.teamRecordsBody.innerHTML = state.teamRecords
-    .map((record) => {
+    .map((record, index) => {
       return `
-      <tr data-id="${record.id}">
+      <tr data-index="${index}">
         <td>${escapeHtml(record.originatorName)}</td>
         <td>${escapeHtml(record.recordBroke)}</td>
         <td>${clamp(record.recordNumber)}</td>
@@ -586,14 +629,16 @@ function renderTeamRecords() {
 
   ui.teamRecordsBody.querySelectorAll('button[data-action="edit-team-record"]').forEach((button) => {
     button.addEventListener('click', () => {
-      const id = button.closest('tr')?.dataset.id;
+      const index = Number(button.closest('tr')?.dataset.index);
+      const id = Number.isInteger(index) ? state.teamRecords[index]?.id : '';
       if (id) openEditTeamRecordDialog(id);
     });
   });
 
   ui.teamRecordsBody.querySelectorAll('button[data-action="remove-team-record"]').forEach((button) => {
     button.addEventListener('click', () => {
-      const id = button.closest('tr')?.dataset.id;
+      const index = Number(button.closest('tr')?.dataset.index);
+      const id = Number.isInteger(index) ? state.teamRecords[index]?.id : '';
       if (id) removeTeamRecord(id);
     });
   });

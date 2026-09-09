@@ -196,7 +196,31 @@
 
     <script>
       const appScript = document.createElement('script');
+      const firebaseAppScript = document.createElement('script');
+      firebaseAppScript.src = 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js';
+      firebaseAppScript.async = false;
+
+      const firebaseDatabaseScript = document.createElement('script');
+      firebaseDatabaseScript.src = 'https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js';
+      firebaseDatabaseScript.async = false;
+
+      const firebaseConfigScript = document.createElement('script');
+      firebaseConfigScript.textContent = `
+        window.__FIREBASE_CONFIG = window.__FIREBASE_CONFIG || null;
+        window.__FIREBASE_DB_PATH = window.__FIREBASE_DB_PATH || 'nocturnals-dashboard/state';
+      `;
+
+      const syncScript = document.createElement('script');
+      syncScript.src = `./firebaseSync.js?v=${window.__assetVersion || Date.now()}`;
+      syncScript.async = false;
+
       appScript.src = `./script.js?v=${window.__assetVersion || Date.now()}`;
+      appScript.async = false;
+
+      document.body.appendChild(firebaseAppScript);
+      document.body.appendChild(firebaseDatabaseScript);
+      document.body.appendChild(firebaseConfigScript);
+      document.body.appendChild(syncScript);
       document.body.appendChild(appScript);
     </script>
   </body>
