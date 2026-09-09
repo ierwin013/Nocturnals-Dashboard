@@ -206,7 +206,15 @@
 
       const firebaseConfigScript = document.createElement('script');
       firebaseConfigScript.textContent = `
-        window.__FIREBASE_CONFIG = window.__FIREBASE_CONFIG || null;
+        window.__FIREBASE_CONFIG = {
+          apiKey: "AIzaSyAGun5LrbiMGuoQ2ZkqDFohfV1ZcU8QR_s",
+          authDomain: "nocturnals-dashboard.firebaseapp.com",
+          projectId: "nocturnals-dashboard",
+          storageBucket: "nocturnals-dashboard.firebasestorage.app",
+          messagingSenderId: "675325406131",
+          appId: "1:675325406131:web:fcdb9ad2ad9952ca8ef9c6",
+          measurementId: "G-9VXNEPG640"
+        };
         window.__FIREBASE_DB_PATH = window.__FIREBASE_DB_PATH || 'nocturnals-dashboard/state';
       `;
 
