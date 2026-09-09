@@ -1,9 +1,5 @@
 const STORAGE_KEY = 'nocturnals-dashboard-v1';
 const DATA_FILE_URL = './data.json';
-const GITHUB_TOKEN_KEY = 'github-token';
-const GITHUB_OWNER = 'ierwin013';
-const GITHUB_REPO = 'Nocturnals-Dashboard';
-const GITHUB_DATA_PATH = 'data.json';
 
 const DEFAULT_ORIGINATORS = [
   { id: 'paula', name: 'Paula', initials: 'PA', subtitle: '' },
@@ -35,8 +31,6 @@ const ui = {
   addTeamRecordBtn: document.getElementById('addTeamRecordBtn'),
   editGoalsBtn: document.getElementById('editGoalsBtn'),
   logEffortBtn: document.getElementById('logEffortBtn'),
-  openGitHubSetupBtn: document.getElementById('openGitHubSetupBtn'),
-  syncStatus: document.getElementById('syncStatus'),
   teamRecordsBody: document.getElementById('teamRecordsBody'),
   originatorDialog: document.getElementById('originatorDialog'),
   originatorForm: document.getElementById('originatorForm'),
@@ -49,12 +43,6 @@ const ui = {
   teamRecordDialog: document.getElementById('teamRecordDialog'),
   teamRecordForm: document.getElementById('teamRecordForm'),
   teamRecordDialogTitle: document.getElementById('teamRecordDialogTitle'),
-  githubSetupDialog: document.getElementById('githubSetupDialog'),
-  githubSetupForm: document.getElementById('githubSetupForm'),
-  githubTokenInput: document.getElementById('githubTokenInput'),
-  githubRememberToken: document.getElementById('githubRememberToken'),
-  githubSetupMessage: document.getElementById('githubSetupMessage'),
-  clearGitHubTokenBtn: document.getElementById('clearGitHubTokenBtn'),
 };
 
 let editOriginatorId = null;
@@ -69,10 +57,7 @@ function withCacheBust(url) {
   state = await loadState();
   bindEvents();
   initializeDate();
-  refreshGitHubSyncStatus();
   render();
-  // Refresh data every 5 seconds to show updates from other users
-  setInterval(refreshData, 5000);
 })();
 
 async function loadState() {
@@ -86,149 +71,42 @@ async function loadState() {
   };
 
   try {
-    // Try to load from data.json first (shared data)
-    const response = await fetch(withCacheBust(DATA_FILE_URL), { cache: 'no-store' });
-    if (response.ok) {
-      const parsed = await response.json();
-      const originators =
-        Array.isArray(parsed.originators) && parsed.originators.length ? parsed.originators : DEFAULT_ORIGINATORS;
-      const teamRecords = Array.isArray(parsed.teamRecords)
-        ? parsed.teamRecords.map(normalizeTeamRecord).filter(Boolean)
-        : [];
-      return {
-        currentDate: today,
-        goals: normalizeGoals(parsed.goals, originators.length),
-        originators,
-        metricsByDate: parsed.metricsByDate && typeof parsed.metricsByDate === 'object' ? parsed.metricsByDate : {},
-        teamRecords,
-      };
-    }
-  } catch (err) {
-    console.log('data.json not found or error loading, using defaults');
-  }
-
-  // Fallback to localStorage if data.json doesn't exist
-  try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
-      const parsed = JSON.parse(raw);
-      const originators =
-        Array.isArray(parsed.originators) && parsed.originators.length ? parsed.originators : DEFAULT_ORIGINATORS;
-      const teamRecords = Array.isArray(parsed.teamRecords)
-        ? parsed.teamRecords.map(normalizeTeamRecord).filter(Boolean)
-        : [];
-      return {
-        currentDate: today,
-        goals: normalizeGoals(parsed.goals, originators.length),
-        originators,
-        metricsByDate: parsed.metricsByDate && typeof parsed.metricsByDate === 'object' ? parsed.metricsByDate : {},
-        teamRecords,
-      };
+      return buildState(raw, today);
     }
   } catch (err) {
     console.log('localStorage error');
   }
 
-  return fallback;
-}
-
-async function saveState(options = {}) {
-  const { syncToGitHub = true } = options;
-  // Save to localStorage for quick access
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-
-  if (!syncToGitHub) return false;
-
-  // Save to data.json for shared access (requires GitHub API)
-  try {
-    return await saveToGitHub();
-  } catch (err) {
-    console.log('Could not save to GitHub, data saved locally only:', err);
-    setStatusMessage(ui.syncStatus, 'Shared sync could not reach GitHub. Local changes are still saved in this browser.', 'error');
-    return false;
-  }
-}
-
-async function saveToGitHub() {
-  const token = getGitHubToken();
-  if (!token) {
-    setStatusMessage(
-      ui.syncStatus,
-      'Shared sync is off. Open Shared Sync and add an authorized GitHub token to publish updates for everyone.',
-      'warning'
-    );
-    return false;
-  }
-
-  const content = toBase64(JSON.stringify(getSharedStateSnapshot(), null, 2));
-
-  try {
-    // Get current file SHA
-    const getResponse = await fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${GITHUB_DATA_PATH}`, {
-      headers: {
-        Authorization: `token ${token}`,
-        Accept: 'application/vnd.github.v3+json',
-      },
-    });
-
-    let sha = null;
-    if (getResponse.ok) {
-      const data = await getResponse.json();
-      sha = data.sha;
-    } else if (getResponse.status !== 404) {
-      throw new Error(await readGitHubError(getResponse));
-    }
-
-    // Update or create file
-    const putResponse = await fetch(
-      `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${GITHUB_DATA_PATH}`,
-      {
-      method: 'PUT',
-      headers: {
-        Authorization: `token ${token}`,
-        Accept: 'application/vnd.github.v3+json',
-      },
-      body: JSON.stringify({
-        message: `Update dashboard data - ${new Date().toISOString()}`,
-        content,
-        ...(sha && { sha }),
-      }),
-      }
-    );
-
-    if (!putResponse.ok) {
-      throw new Error(await readGitHubError(putResponse));
-    }
-    setStatusMessage(ui.syncStatus, `Shared data saved to GitHub at ${formatTime(new Date())}.`, 'ready');
-    setStatusMessage(ui.githubSetupMessage, 'Token saved. Future stat updates will publish to data.json for all visitors.', 'ready');
-    return true;
-  } catch (err) {
-    console.log('GitHub save error:', err);
-    setStatusMessage(
-      ui.syncStatus,
-      'GitHub rejected the shared save. Re-open Shared Sync and check that your token can write repository contents.',
-      'error'
-    );
-    setStatusMessage(ui.githubSetupMessage, err.message || 'GitHub rejected the token.', 'error');
-    return false;
-  }
-}
-
-async function refreshData() {
   try {
     const response = await fetch(withCacheBust(DATA_FILE_URL), { cache: 'no-store' });
     if (response.ok) {
-      const latest = await response.json();
-      // Update state without losing current date or local changes
-      state.originators = latest.originators || state.originators;
-      state.goals = latest.goals || state.goals;
-      state.metricsByDate = latest.metricsByDate || state.metricsByDate;
-      state.teamRecords = latest.teamRecords || state.teamRecords;
-      render();
+      return buildState(await response.text(), today);
     }
   } catch (err) {
-    // Silently fail on refresh errors
+    console.log('data.json not found or error loading, using defaults');
   }
+
+  return fallback;
+}
+
+function buildState(rawState, today) {
+  const parsed = JSON.parse(rawState);
+  const originators =
+    Array.isArray(parsed.originators) && parsed.originators.length ? parsed.originators : DEFAULT_ORIGINATORS;
+  const teamRecords = Array.isArray(parsed.teamRecords) ? parsed.teamRecords.map(normalizeTeamRecord).filter(Boolean) : [];
+  return {
+    currentDate: today,
+    goals: normalizeGoals(parsed.goals, originators.length),
+    originators,
+    metricsByDate: parsed.metricsByDate && typeof parsed.metricsByDate === 'object' ? parsed.metricsByDate : {},
+    teamRecords,
+  };
+}
+
+function saveState() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
 
 function getTodayISO() {
@@ -257,16 +135,13 @@ function bindEvents() {
   ui.dateInput.addEventListener('change', () => {
     if (!ui.dateInput.value) return;
     state.currentDate = ui.dateInput.value;
-    saveState({ syncToGitHub: false });
+    saveState();
     render();
   });
   ui.addOriginatorBtn.addEventListener('click', openAddOriginatorDialog);
   ui.addTeamRecordBtn.addEventListener('click', openAddTeamRecordDialog);
   ui.editGoalsBtn.addEventListener('click', openGoalsDialog);
   ui.logEffortBtn.addEventListener('click', openLogEffortDialog);
-  ui.openGitHubSetupBtn.addEventListener('click', openGitHubSetupDialog);
-  ui.githubSetupForm.addEventListener('submit', saveGitHubTokenFromDialog);
-  ui.clearGitHubTokenBtn.addEventListener('click', clearStoredGitHubToken);
 
   ui.originatorForm.addEventListener('submit', (event) => {
     event.preventDefault();
@@ -350,7 +225,7 @@ function changeDate(delta) {
   const date = parseISODate(state.currentDate);
   date.setDate(date.getDate() + delta);
   state.currentDate = toISODate(date);
-  saveState({ syncToGitHub: false });
+  saveState();
   render();
 }
 
@@ -777,127 +652,4 @@ function normalizeTeamRecord(rawRecord) {
     recordBroke,
     recordNumber: clamp(toNumber(rawRecord.recordNumber)),
   };
-}
-
-function getSharedStateSnapshot() {
-  return {
-    goals: state.goals,
-    originators: state.originators,
-    metricsByDate: state.metricsByDate,
-    teamRecords: state.teamRecords,
-  };
-}
-
-function getGitHubToken() {
-  return sessionStorage.getItem(GITHUB_TOKEN_KEY) || localStorage.getItem(GITHUB_TOKEN_KEY) || '';
-}
-
-function refreshGitHubSyncStatus() {
-  if (getGitHubToken()) {
-    setStatusMessage(ui.syncStatus, 'Shared sync is ready. Stat changes will update data.json for everyone.', 'ready');
-    return;
-  }
-
-  setStatusMessage(
-    ui.syncStatus,
-    'Shared sync is off until an authorized maintainer adds a GitHub token.',
-    'warning'
-  );
-}
-
-function openGitHubSetupDialog() {
-  ui.githubSetupForm.reset();
-  ui.githubRememberToken.checked = Boolean(localStorage.getItem(GITHUB_TOKEN_KEY));
-  if (getGitHubToken()) {
-    setStatusMessage(
-      ui.githubSetupMessage,
-      'A token is already stored on this device. Paste a new one to replace it, or remove it below.',
-      'ready'
-    );
-  } else {
-    setStatusMessage(
-      ui.githubSetupMessage,
-      'Paste a fine-grained token with repository Contents read/write access to enable shared saves.',
-      'warning'
-    );
-  }
-  ui.githubSetupDialog.showModal();
-}
-
-async function saveGitHubTokenFromDialog(event) {
-  event.preventDefault();
-  const token = String(ui.githubTokenInput.value || '').trim();
-  if (!token) {
-    setStatusMessage(ui.githubSetupMessage, 'Enter a GitHub token before saving.', 'error');
-    return;
-  }
-
-  setStatusMessage(ui.githubSetupMessage, 'Checking token access to this repository…', 'warning');
-
-  try {
-    const response = await fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}`, {
-      headers: {
-        Authorization: `token ${token}`,
-        Accept: 'application/vnd.github.v3+json',
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(await readGitHubError(response));
-    }
-
-    if (ui.githubRememberToken.checked) {
-      localStorage.setItem(GITHUB_TOKEN_KEY, token);
-      sessionStorage.removeItem(GITHUB_TOKEN_KEY);
-    } else {
-      sessionStorage.setItem(GITHUB_TOKEN_KEY, token);
-      localStorage.removeItem(GITHUB_TOKEN_KEY);
-    }
-
-    ui.githubTokenInput.value = '';
-    refreshGitHubSyncStatus();
-    setStatusMessage(ui.githubSetupMessage, 'Token saved. Future stat changes can publish shared updates.', 'ready');
-    ui.githubSetupDialog.close();
-  } catch (err) {
-    setStatusMessage(ui.githubSetupMessage, err.message || 'GitHub could not validate that token.', 'error');
-  }
-}
-
-function clearStoredGitHubToken() {
-  sessionStorage.removeItem(GITHUB_TOKEN_KEY);
-  localStorage.removeItem(GITHUB_TOKEN_KEY);
-  ui.githubTokenInput.value = '';
-  refreshGitHubSyncStatus();
-  setStatusMessage(ui.githubSetupMessage, 'Stored GitHub token removed from this browser.', 'warning');
-}
-
-function setStatusMessage(element, message, tone) {
-  element.textContent = message;
-  element.className = `status-note${tone ? ` status-${tone}` : ''}`;
-}
-
-async function readGitHubError(response) {
-  try {
-    const payload = await response.json();
-    if (payload && typeof payload.message === 'string' && payload.message.trim()) {
-      return payload.message.trim();
-    }
-  } catch (err) {
-    // Ignore JSON parsing failures and fall back to status text.
-  }
-
-  return `GitHub API error: ${response.status}${response.statusText ? ` ${response.statusText}` : ''}`;
-}
-
-function formatTime(date) {
-  return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-}
-
-function toBase64(value) {
-  const bytes = new TextEncoder().encode(value);
-  let binary = '';
-  bytes.forEach((byte) => {
-    binary += String.fromCharCode(byte);
-  });
-  return btoa(binary);
 }

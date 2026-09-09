@@ -6,19 +6,7 @@ Nocturnals is a dark-themed daily production and performance dashboard for night
 
 Open `https://ierwin013.github.io/Nocturnals-Dashboard/` in a browser.
 
-Dashboard data loads from `data.json` so every visitor sees the same shared stats. The app still caches edits in browser `localStorage` for quick local access.
-
-## Shared GitHub saves
-
-GitHub Pages can read the shared `data.json` file directly, but writing back to the repository still requires an authorized GitHub user.
-
-1. Open the dashboard and click **Shared Sync**.
-2. Create a **fine-grained personal access token** for `ierwin013/Nocturnals-Dashboard`.
-3. Grant the token **Contents: Read and write** permission for that repository only.
-4. Paste the token into the dialog and save it for the current session or this device.
-5. After that, stat changes will update `data.json` in the repository so the next GitHub Pages refresh shows the shared data to everyone.
-
-When `data.json` changes on `main`, `.github/workflows/commit-data.yml` adds an `updatedAt` timestamp to the file and creates a follow-up commit with a UTC timestamp in the commit message.
+Dashboard edits are stored in that browser's `localStorage`. The bundled `data.json` file is only used as a starting snapshot when no local dashboard data exists yet.
 
 ## Deployment and cache behavior
 
@@ -28,18 +16,16 @@ When `data.json` changes on `main`, `.github/workflows/commit-data.yml` adds an 
 - **Cache-busting behavior:**
   - `index.html` adds no-cache meta directives.
   - `styles.css` and `script.js` are requested with a timestamp query string on each load.
-  - `data.json` fetches use a timestamp query string plus `cache: 'no-store'` to reduce stale shared data views.
-- **Workflow hygiene:** `commit-data.yml` uses `if: github.actor != 'github-actions[bot]'` to avoid recursive commit loops.
+  - `data.json` is fetched with a timestamp query string plus `cache: 'no-store'` during first-load bootstrap.
+- **Workflow hygiene:** `commit-data.yml` uses `if: github.actor != 'github-actions[bot]'` to avoid recursive commit loops when `data.json` is updated in the repository.
 
 ### Post-merge verification
 
 1. Open the live URL and do a **hard refresh**.
 2. Open the same URL in an **incognito/private** window.
-3. Make a shared update and confirm the latest `updatedAt` timestamp in `data.json` changes on `main`.
-4. Confirm roster/team-record updates appear quickly and that views are not stale due to cached assets/data.
+3. Clear site storage or open the site in a fresh private window to confirm `data.json` still seeds the dashboard on first load.
+4. Confirm roster/team-record updates persist locally and that views are not stale due to cached assets/data.
 
 ### Security notes
 
-- Never commit a token into the repository.
-- Prefer a fine-grained token scoped to this single repository.
-- Use **Remove token** in the dashboard if you no longer want this browser to publish updates.
+- Do not commit browser-exported dashboard data or other sensitive local notes into the repository unintentionally.
