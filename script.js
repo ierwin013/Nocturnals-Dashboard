@@ -214,7 +214,7 @@ function renderHeader() {
   const date = parseISODate(state.currentDate);
   const full = date.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' });
   const short = date.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
-  ui.headerSubtitle.textContent = `Team Individual Stats for ${full}.`;
+  ui.headerSubtitle.textContent = `Individual Daily Stats for ${full}.`;
   ui.dateLabel.textContent = short;
 }
 
