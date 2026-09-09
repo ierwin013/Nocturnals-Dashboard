@@ -504,28 +504,11 @@ function escapeHtml(input) {
 }
 
 function normalizeGoals(rawGoals, originatorCount) {
-  const goalCount = Math.max(1, clamp(originatorCount));
   const source = rawGoals && typeof rawGoals === 'object' ? rawGoals : {};
-  const pulls = hasNumber(source.pulls)
-    ? clamp(source.pulls)
-    : hasNumber(source.avgLeads)
-      ? clamp(Math.round(toNumber(source.avgLeads) * goalCount))
-      : DEFAULT_GOALS.pulls;
-  const contacts = hasNumber(source.contacts)
-    ? clamp(source.contacts)
-    : hasNumber(source.contactToLead)
-      ? clamp(Math.round(pulls * (toNumber(source.contactToLead) / 100)))
-      : DEFAULT_GOALS.contacts;
-  const attachments = hasNumber(source.attachments)
-    ? clamp(source.attachments)
-    : hasNumber(source.contactToAgent)
-      ? clamp(Math.round(contacts * (toNumber(source.contactToAgent) / 100)))
-      : DEFAULT_GOALS.attachments;
-  const lender = hasNumber(source.lender)
-    ? clamp(source.lender)
-    : hasNumber(source.sentToLender)
-      ? clamp(Math.round(contacts * (toNumber(source.sentToLender) / 100)))
-      : DEFAULT_GOALS.lender;
+  const pulls = hasNumber(source.pulls) ? clamp(source.pulls) : DEFAULT_GOALS.pulls;
+  const contacts = hasNumber(source.contacts) ? clamp(source.contacts) : DEFAULT_GOALS.contacts;
+  const attachments = hasNumber(source.attachments) ? clamp(source.attachments) : DEFAULT_GOALS.attachments;
+  const lender = hasNumber(source.lender) ? clamp(source.lender) : DEFAULT_GOALS.lender;
 
   return { pulls, contacts, attachments, lender };
 }
