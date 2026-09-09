@@ -299,14 +299,10 @@ function renderGoals(totals) {
 
   ui.goalsList.innerHTML = goals
     .map((goal) => {
-      const pct = goalProgress(goal.value, goal.goal);
       return `
       <section class="goal-item">
         <h3>${goal.title}</h3>
-        <p class="goal-line"><strong>${goal.goal}</strong> goal · ${goal.value} logged</p>
-        <div class="progress" role="progressbar" aria-label="${goal.title} goal progress" aria-valuenow="${Math.round(pct)}" aria-valuemin="0" aria-valuemax="100">
-          <span style="width:${Math.min(pct, 100)}%"></span>
-        </div>
+        <p class="goal-line"><strong>${goal.goal}</strong> goal</p>
       </section>`;
     })
     .join('');
@@ -485,11 +481,6 @@ function openLogEffortDialog() {
   };
 
   ui.logEffortDialog.showModal();
-}
-
-function goalProgress(value, goal) {
-  if (!goal || goal <= 0) return 0;
-  return Math.max(0, (value / goal) * 100);
 }
 
 function clamp(value) {
