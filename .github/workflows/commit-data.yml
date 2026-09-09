@@ -1,0 +1,56 @@
+name: Commit data.json updates
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - data.json
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  commit-data:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+
+      - name: Stamp latest data update
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const filePath = 'data.json';
+          const existing = fs.readFileSync(filePath, 'utf8');
+          const parsed = JSON.parse(existing);
+          const next = {
+            ...parsed,
+            updatedAt: new Date().toISOString(),
+          };
+          const output = `${JSON.stringify(next, null, 2)}\n`;
+
+          if (output !== existing) {
+            fs.writeFileSync(filePath, output);
+          }
+          NODE
+
+      - name: Build commit timestamp
+        id: timestamp
+        run: echo "value=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> "$GITHUB_OUTPUT"
+
+      - name: Commit stamped data.json
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: "chore: update data.json - ${{ steps.timestamp.outputs.value }}"
+          file_pattern: data.json
