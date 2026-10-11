@@ -28,12 +28,6 @@ const SIDEBAR_LEADERS = [
   { name: 'Ian', initials: 'IA', leads: 6, contacts: 2, attachments: 1, stl: 0 },
 ];
 
-const SIDEBAR_PACE = [
-  { label: 'Leads Pace', value: 84, goal: 100, color: '#8cc8ff' },
-  { label: 'Contacts Pace', value: 76, goal: 90, color: '#64d3ac' },
-  { label: 'Attachments Pace', value: 68, goal: 80, color: '#ffca7a' },
-];
-
 let state;
 let stopRealtimeSync = null;
 const ui = {
@@ -51,8 +45,7 @@ const ui = {
   toggleSidebarBtn: document.getElementById('toggleSidebarBtn'),
   sidebarContainer: document.getElementById('sidebarContainer'),
   leadersList: document.getElementById('leadersList'),
-  competitionContent: document.getElementById('competitionContent'),
-  pulseContent: document.getElementById('pulseContent'),
+  dailyBestsList: document.getElementById('dailyBestsList'),
   teamRecordsBody: document.getElementById('teamRecordsBody'),
   originatorDialog: document.getElementById('originatorDialog'),
   originatorForm: document.getElementById('originatorForm'),
@@ -203,18 +196,6 @@ function bindEvents() {
   ui.logEffortBtn.addEventListener('click', openLogEffortDialog);
   ui.toggleSidebarBtn.addEventListener('click', () => {
     ui.sidebarContainer.classList.toggle('sidebar-collapsed');
-  });
-
-  document.querySelectorAll('.sidebar-tab-btn').forEach((button) => {
-    button.addEventListener('click', () => {
-      const tab = button.dataset.tab;
-      document.querySelectorAll('.sidebar-tab-btn').forEach((btn) => {
-        btn.classList.toggle('active', btn === button);
-      });
-      document.querySelectorAll('.sidebar-pane').forEach((pane) => {
-        pane.classList.toggle('active', pane.id === `pane-${tab}`);
-      });
-    });
   });
 
   ui.originatorForm.addEventListener('submit', (event) => {
@@ -563,51 +544,43 @@ function renderSidebar() {
     }).join('')}
   `;
 
-  const attachmentLeader = SIDEBAR_LEADERS.reduce((winner, entry) => {
-    return entry.attachments > winner.attachments ? entry : winner;
-  }, SIDEBAR_LEADERS[0]);
+  renderDailyBests();
+}
 
-  ui.competitionContent.innerHTML = `
-    <div class="challenge-card">
-      <p class="challenge-label">Challenge</p>
-      <h3>Attachment King</h3>
-      <div class="challenge-winner">
-        <span class="leader-badge large">${attachmentLeader.initials}</span>
-        <div>
-          <div class="winner-name">${attachmentLeader.name}</div>
-          <div class="winner-metric">${attachmentLeader.attachments} attachments</div>
+function renderDailyBests() {
+  const today = getTodayISO();
+  const pastDates = Object.keys(state.metricsByDate).filter((date) => date < today);
+  const fields = [
+    ['pulls', 'Leads'],
+    ['contacts', 'Contacts'],
+    ['agents', 'Attachments'],
+    ['lender', 'STL'],
+  ];
+  const rows = state.originators.map((originator) => {
+    const bests = {};
+    fields.forEach(([key]) => {
+      bests[key] = pastDates.reduce((max, date) => {
+        const value = clamp(toNumber(state.metricsByDate[date]?.[originator.id]?.[key]));
+        return value > max ? value : max;
+      }, 0);
+    });
+    return `
+      <div class="leader-row">
+        <div class="leader-avatar">${originator.initials}</div>
+        <div class="leader-name">${originator.name}</div>
+        <div class="leader-metrics">
+          ${fields.map(([key, label]) => `<div class="leader-metric"><span class="metric-value">${bests[key]}</span><span class="metric-label">${label}</span></div>`).join('')}
         </div>
+      </div>`;
+  }).join('');
+  ui.dailyBestsList.innerHTML = `
+    <div class="leaders-header">
+      <div class="leaders-title-wrap">
+        <span class="leaders-crown" aria-hidden="true">⭐</span>
+        <span class="leaders-title">DAILY BESTS</span>
       </div>
     </div>
-    <div class="mini-list">
-      ${SIDEBAR_LEADERS.slice(0, 4).map((entry) => `
-        <div class="mini-row">
-          <span>${entry.name}</span>
-          <strong>${entry.attachments}</strong>
-        </div>
-      `).join('')}
-    </div>
-  `;
-
-  ui.pulseContent.innerHTML = `
-    <div class="pulse-header">
-      <span>Team Pace</span>
-      <strong>78%</strong>
-    </div>
-    ${SIDEBAR_PACE.map((item) => {
-      const pct = Math.min(100, (item.value / item.goal) * 100);
-      return `
-        <div class="pace-row">
-          <div class="pace-label-row">
-            <span>${item.label}</span>
-            <strong>${item.value}/${item.goal}</strong>
-          </div>
-          <div class="progress-track">
-            <span class="progress-fill" style="width:${pct}%; background:${item.color};"></span>
-          </div>
-        </div>
-      `;
-    }).join('')}
+    ${rows || '<p class="goal-text">No roster members yet.</p>'}
   `;
 }
 
