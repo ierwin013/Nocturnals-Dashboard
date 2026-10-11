@@ -20,12 +20,12 @@ const DEFAULT_GOALS = {
 
 const SIDEBAR_LEADERS = [
   { name: 'Evan', initials: 'EV', leads: 63, contacts: 13, attachments: 10, stl: 4 },
-  { name: 'Dakota', initials: 'DA', leads: 58, contacts: 12, attachments: 8, stl: 4 },
-  { name: 'Jared', initials: 'JA', leads: 54, contacts: 10, attachments: 7, stl: 3 },
-  { name: 'Paula', initials: 'PA', leads: 51, contacts: 11, attachments: 6, stl: 3 },
-  { name: 'Peyton', initials: 'PE', leads: 48, contacts: 10, attachments: 5, stl: 2 },
-  { name: 'Henry', initials: 'HE', leads: 44, contacts: 9, attachments: 5, stl: 2 },
-  { name: 'Ian', initials: 'IA', leads: 39, contacts: 8, attachments: 4, stl: 2 },
+  { name: 'Dakota', initials: 'DA', leads: 23, contacts: 3, attachments: 2, stl: 2 },
+  { name: 'Jared', initials: 'JM', leads: 10, contacts: 5, attachments: 3, stl: 0 },
+  { name: 'Paula', initials: 'PA', leads: 11, contacts: 4, attachments: 2, stl: 0 },
+  { name: 'Peyton', initials: 'PE', leads: 9, contacts: 4, attachments: 1, stl: 0 },
+  { name: 'Henry', initials: 'HE', leads: 8, contacts: 3, attachments: 1, stl: 0 },
+  { name: 'Ian', initials: 'IA', leads: 6, contacts: 2, attachments: 1, stl: 0 },
 ];
 
 const SIDEBAR_PACE = [
@@ -536,22 +536,32 @@ function renderStepper(metric, value) {
 }
 
 function renderSidebar() {
-  ui.leadersList.innerHTML = SIDEBAR_LEADERS.map((entry) => {
-    return `
-      <div class="leader-row">
-        <div class="leader-top">
-          <span class="leader-badge">${entry.initials}</span>
-          <span class="leader-name">${entry.name}</span>
-          <span class="leader-score">${entry.leads}</span>
-        </div>
-        <div class="leader-meta">
-          <span>${entry.contacts} contacts</span>
-          <span>${entry.attachments} attachments</span>
-          <span>${entry.stl} STL</span>
-        </div>
+  ui.leadersList.innerHTML = `
+    <div class="leaders-header">
+      <div class="leaders-title-wrap">
+        <span class="leaders-crown" aria-hidden="true">🏆</span>
+        <span class="leaders-title">TODAY'S LEADERS</span>
       </div>
-    `;
-  }).join('');
+      <button type="button" class="leaders-view-all">View All</button>
+    </div>
+    ${SIDEBAR_LEADERS.slice(0, 3).map((entry, index) => {
+      const rank = index + 1;
+      const rankClass = rank === 1 ? 'gold' : rank === 2 ? 'silver' : 'bronze';
+      return `
+        <div class="leader-row">
+          <div class="leader-rank ${rankClass}">${rank}</div>
+          <div class="leader-avatar">${entry.initials}</div>
+          <div class="leader-name">${entry.name}</div>
+          <div class="leader-metrics">
+            <div class="leader-metric"><span class="metric-value">${entry.leads}</span><span class="metric-label">Leads</span></div>
+            <div class="leader-metric"><span class="metric-value">${entry.contacts}</span><span class="metric-label">Contacts</span></div>
+            <div class="leader-metric"><span class="metric-value">${entry.attachments}</span><span class="metric-label">Attachments</span></div>
+            <div class="leader-metric"><span class="metric-value">${entry.stl}</span><span class="metric-label">STL</span></div>
+          </div>
+        </div>
+      `;
+    }).join('')}
+  `;
 
   const attachmentLeader = SIDEBAR_LEADERS.reduce((winner, entry) => {
     return entry.attachments > winner.attachments ? entry : winner;
