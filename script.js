@@ -537,9 +537,9 @@ function getTopLeaders() {
       };
     })
     .filter((entry) => entry.pulls + entry.contacts + entry.agents + entry.lender > 0)
-    .sort((a, b) => b.pulls - a.pulls
+    .sort((a, b) => b.agents - a.agents
+      || b.pulls - a.pulls
       || b.contacts - a.contacts
-      || b.agents - a.agents
       || b.lender - a.lender
       || a.name.localeCompare(b.name))
     .slice(0, 3);
