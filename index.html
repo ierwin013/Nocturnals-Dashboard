@@ -31,6 +31,7 @@
           <p class="subtitle" id="headerSubtitle"></p>
         </div>
         <div class="header-actions">
+          <button id="toggleSidebarBtn" class="primary-btn">≡ Sidebar</button>
           <button id="logEffortBtn" class="primary-btn">+ Log effort</button>
         </div>
       </header>
@@ -51,57 +52,96 @@
 
       <section class="stats-grid" id="topStats"></section>
 
-      <section class="main-grid">
-        <article class="card roster-card">
-          <div class="card-head">
-            <div>
-              <p class="eyebrow">Daily Effort</p>
-              <h2>Nocturnals Roster</h2>
-            </div>
-            <button id="addOriginatorBtn" class="ghost-btn">+ Add</button>
-          </div>
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Originator</th>
-                  <th>Leads Pulled</th>
-                  <th>Contacts</th>
-                  <th>Attachments</th>
-                  <th>Sent to Lender</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody id="rosterBody"></tbody>
-            </table>
-          </div>
-        </article>
-      </section>
+      <!-- Main grid: left content + right sidebar -->
+      <div class="main-dashboard-grid">
+        <!-- Left side: main content -->
+        <div class="dashboard-left">
+          <section class="main-grid">
+            <article class="card roster-card">
+              <div class="card-head">
+                <div>
+                  <p class="eyebrow">Daily Effort</p>
+                  <h2>Nocturnals Roster</h2>
+                </div>
+                <button id="addOriginatorBtn" class="ghost-btn">+ Add</button>
+              </div>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Originator</th>
+                      <th>Leads Pulled</th>
+                      <th>Contacts</th>
+                      <th>Attachments</th>
+                      <th>Sent to Lender</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="rosterBody"></tbody>
+                </table>
+              </div>
+            </article>
+          </section>
 
-      <section class="main-grid team-records-grid">
-        <article class="card roster-card team-records-card">
-          <div class="card-head">
-            <div>
-              <p class="eyebrow">Milestones</p>
-              <h2>Team Records</h2>
+          <section class="main-grid team-records-grid">
+            <article class="card roster-card team-records-card">
+              <div class="card-head">
+                <div>
+                  <p class="eyebrow">Milestones</p>
+                  <h2>Team Records</h2>
+                </div>
+                <button id="addTeamRecordBtn" class="ghost-btn">+ Add</button>
+              </div>
+              <div class="table-wrap">
+                <table class="team-records-table">
+                  <thead>
+                    <tr>
+                      <th>Originator Name</th>
+                      <th>Record Broke</th>
+                      <th>#</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="teamRecordsBody"></tbody>
+                </table>
+              </div>
+            </article>
+          </section>
+        </div>
+
+        <!-- Right sidebar: tabbed widgets -->
+        <aside class="sidebar-container" id="sidebarContainer">
+          <div class="sidebar-content card">
+            <!-- Tab headers -->
+            <div class="sidebar-tabs">
+              <button class="sidebar-tab-btn active" data-tab="leaders">
+                Today's Leaders
+              </button>
+              <button class="sidebar-tab-btn" data-tab="competition">
+                Competition
+              </button>
+              <button class="sidebar-tab-btn" data-tab="pulse">
+                Team Pulse
+              </button>
             </div>
-            <button id="addTeamRecordBtn" class="ghost-btn">+ Add</button>
+
+            <!-- Tab pane: Today's Leaders -->
+            <div class="sidebar-pane active" id="pane-leaders">
+              <div class="leaders-list" id="leadersList"></div>
+            </div>
+
+            <!-- Tab pane: Competition -->
+            <div class="sidebar-pane" id="pane-competition">
+              <div class="competition-content" id="competitionContent"></div>
+            </div>
+
+            <!-- Tab pane: Team Pulse -->
+            <div class="sidebar-pane" id="pane-pulse">
+              <div class="pulse-content" id="pulseContent"></div>
+            </div>
           </div>
-          <div class="table-wrap">
-            <table class="team-records-table">
-              <thead>
-                <tr>
-                  <th>Originator Name</th>
-                  <th>Record Broke</th>
-                  <th>#</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody id="teamRecordsBody"></tbody>
-            </table>
-          </div>
-        </article>
-      </section>
+        </aside>
+      </div>
     </main>
 
     <dialog id="originatorDialog" class="modal">
