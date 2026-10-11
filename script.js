@@ -18,6 +18,22 @@ const DEFAULT_GOALS = {
   lender: 13,
 };
 
+const SIDEBAR_LEADERS = [
+  { name: 'Evan', initials: 'EV', leads: 63, contacts: 13, attachments: 10, stl: 4 },
+  { name: 'Dakota', initials: 'DA', leads: 58, contacts: 12, attachments: 8, stl: 4 },
+  { name: 'Jared', initials: 'JA', leads: 54, contacts: 10, attachments: 7, stl: 3 },
+  { name: 'Paula', initials: 'PA', leads: 51, contacts: 11, attachments: 6, stl: 3 },
+  { name: 'Peyton', initials: 'PE', leads: 48, contacts: 10, attachments: 5, stl: 2 },
+  { name: 'Henry', initials: 'HE', leads: 44, contacts: 9, attachments: 5, stl: 2 },
+  { name: 'Ian', initials: 'IA', leads: 39, contacts: 8, attachments: 4, stl: 2 },
+];
+
+const SIDEBAR_PACE = [
+  { label: 'Leads Pace', value: 84, goal: 100, color: '#8cc8ff' },
+  { label: 'Contacts Pace', value: 76, goal: 90, color: '#64d3ac' },
+  { label: 'Attachments Pace', value: 68, goal: 80, color: '#ffca7a' },
+];
+
 let state;
 let stopRealtimeSync = null;
 const ui = {
@@ -32,6 +48,11 @@ const ui = {
   addTeamRecordBtn: document.getElementById('addTeamRecordBtn'),
   editGoalsBtn: document.getElementById('editGoalsBtn'),
   logEffortBtn: document.getElementById('logEffortBtn'),
+  toggleSidebarBtn: document.getElementById('toggleSidebarBtn'),
+  sidebarContainer: document.getElementById('sidebarContainer'),
+  leadersList: document.getElementById('leadersList'),
+  competitionContent: document.getElementById('competitionContent'),
+  pulseContent: document.getElementById('pulseContent'),
   teamRecordsBody: document.getElementById('teamRecordsBody'),
   originatorDialog: document.getElementById('originatorDialog'),
   originatorForm: document.getElementById('originatorForm'),
@@ -53,7 +74,6 @@ function withCacheBust(url) {
   return `${url}${url.includes('?') ? '&' : '?'}v=${Date.now()}`;
 }
 
-// Initialize on page load
 (async () => {
   state = await loadState();
   bindEvents();
@@ -181,6 +201,21 @@ function bindEvents() {
   ui.addTeamRecordBtn.addEventListener('click', openAddTeamRecordDialog);
   ui.editGoalsBtn.addEventListener('click', openGoalsDialog);
   ui.logEffortBtn.addEventListener('click', openLogEffortDialog);
+  ui.toggleSidebarBtn.addEventListener('click', () => {
+    ui.sidebarContainer.classList.toggle('sidebar-collapsed');
+  });
+
+  document.querySelectorAll('.sidebar-tab-btn').forEach((button) => {
+    button.addEventListener('click', () => {
+      const tab = button.dataset.tab;
+      document.querySelectorAll('.sidebar-tab-btn').forEach((btn) => {
+        btn.classList.toggle('active', btn === button);
+      });
+      document.querySelectorAll('.sidebar-pane').forEach((pane) => {
+        pane.classList.toggle('active', pane.id === `pane-${tab}`);
+      });
+    });
+  });
 
   ui.originatorForm.addEventListener('submit', (event) => {
     event.preventDefault();
@@ -329,6 +364,7 @@ function render() {
   renderRoster(calculated.totals);
   renderTeamRecords();
   renderLogEffortSelect();
+  renderSidebar();
 }
 
 function renderHeader() {
@@ -497,6 +533,72 @@ function renderStepper(metric, value) {
     <input class="metric-input" type="number" min="0" step="1" inputmode="numeric" data-metric="${metric}" value="${clamp(value)}" aria-label="${metric}" />
     <button type="button" class="step-btn" data-metric="${metric}" data-delta="1">+</button>
   </div>`;
+}
+
+function renderSidebar() {
+  ui.leadersList.innerHTML = SIDEBAR_LEADERS.map((entry) => {
+    return `
+      <div class="leader-row">
+        <div class="leader-top">
+          <span class="leader-badge">${entry.initials}</span>
+          <span class="leader-name">${entry.name}</span>
+          <span class="leader-score">${entry.leads}</span>
+        </div>
+        <div class="leader-meta">
+          <span>${entry.contacts} contacts</span>
+          <span>${entry.attachments} attachments</span>
+          <span>${entry.stl} STL</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  const attachmentLeader = SIDEBAR_LEADERS.reduce((winner, entry) => {
+    return entry.attachments > winner.attachments ? entry : winner;
+  }, SIDEBAR_LEADERS[0]);
+
+  ui.competitionContent.innerHTML = `
+    <div class="challenge-card">
+      <p class="challenge-label">Challenge</p>
+      <h3>Attachment King</h3>
+      <div class="challenge-winner">
+        <span class="leader-badge large">${attachmentLeader.initials}</span>
+        <div>
+          <div class="winner-name">${attachmentLeader.name}</div>
+          <div class="winner-metric">${attachmentLeader.attachments} attachments</div>
+        </div>
+      </div>
+    </div>
+    <div class="mini-list">
+      ${SIDEBAR_LEADERS.slice(0, 4).map((entry) => `
+        <div class="mini-row">
+          <span>${entry.name}</span>
+          <strong>${entry.attachments}</strong>
+        </div>
+      `).join('')}
+    </div>
+  `;
+
+  ui.pulseContent.innerHTML = `
+    <div class="pulse-header">
+      <span>Team Pace</span>
+      <strong>78%</strong>
+    </div>
+    ${SIDEBAR_PACE.map((item) => {
+      const pct = Math.min(100, (item.value / item.goal) * 100);
+      return `
+        <div class="pace-row">
+          <div class="pace-label-row">
+            <span>${item.label}</span>
+            <strong>${item.value}/${item.goal}</strong>
+          </div>
+          <div class="progress-track">
+            <span class="progress-fill" style="width:${pct}%; background:${item.color};"></span>
+          </div>
+        </div>
+      `;
+    }).join('')}
+  `;
 }
 
 function updateMetric(originatorId, metric, delta) {
