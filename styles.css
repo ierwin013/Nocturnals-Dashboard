@@ -32,7 +32,7 @@ select {
 }
 
 .app {
-  max-width: 1380px;
+  max-width: none;
   margin: 0 auto;
   padding: 2.25rem 1.25rem 2rem;
 }
@@ -217,7 +217,7 @@ h2 {
 
 .main-dashboard-grid {
   display: grid;
-  grid-template-columns: 1fr 380px;
+  grid-template-columns: minmax(0, 1fr) 400px;
   gap: 24px;
   align-items: start;
 }
@@ -249,7 +249,7 @@ h2 {
 
 .sidebar-tabs {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: 1fr;
   gap: 8px;
   margin-bottom: 16px;
 }
