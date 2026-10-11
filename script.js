@@ -18,16 +18,6 @@ const DEFAULT_GOALS = {
   lender: 13,
 };
 
-const SIDEBAR_LEADERS = [
-  { name: 'Evan', initials: 'EV', leads: 63, contacts: 13, attachments: 10, stl: 4 },
-  { name: 'Dakota', initials: 'DA', leads: 23, contacts: 3, attachments: 2, stl: 2 },
-  { name: 'Jared', initials: 'JM', leads: 10, contacts: 5, attachments: 3, stl: 0 },
-  { name: 'Paula', initials: 'PA', leads: 11, contacts: 4, attachments: 2, stl: 0 },
-  { name: 'Peyton', initials: 'PE', leads: 9, contacts: 4, attachments: 1, stl: 0 },
-  { name: 'Henry', initials: 'HE', leads: 8, contacts: 3, attachments: 1, stl: 0 },
-  { name: 'Ian', initials: 'IA', leads: 6, contacts: 2, attachments: 1, stl: 0 },
-];
-
 let state;
 let stopRealtimeSync = null;
 const ui = {
@@ -516,7 +506,62 @@ function renderStepper(metric, value) {
   </div>`;
 }
 
+const SIDEBAR_FIELDS = [
+  ['pulls', 'Leads'],
+  ['contacts', 'Contacts'],
+  ['agents', 'Attachments'],
+  ['lender', 'STL'],
+];
+
+function renderMetricCell(value, label, date) {
+  const dateLine = date === undefined ? '' : `<span class="metric-date">${value > 0 && date ? escapeHtml(formatShortDate(date)) : '—'}</span>`;
+  return `<div class="leader-metric"><span class="metric-value">${value}</span><span class="metric-label">${label}</span>${dateLine}</div>`;
+}
+
+function formatShortDate(iso) {
+  return parseISODate(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+function getTopLeaders() {
+  const todayMetrics = state.metricsByDate[getTodayISO()] || {};
+  return state.originators
+    .map((originator) => {
+      const m = todayMetrics[originator.id] || {};
+      return {
+        name: String(originator.name || ''),
+        initials: originator.initials,
+        pulls: clamp(toNumber(m.pulls)),
+        contacts: clamp(toNumber(m.contacts)),
+        agents: clamp(toNumber(m.agents)),
+        lender: clamp(toNumber(m.lender)),
+      };
+    })
+    .filter((entry) => entry.pulls + entry.contacts + entry.agents + entry.lender > 0)
+    .sort((a, b) => b.pulls - a.pulls
+      || b.contacts - a.contacts
+      || b.agents - a.agents
+      || b.lender - a.lender
+      || a.name.localeCompare(b.name))
+    .slice(0, 3);
+}
+
 function renderSidebar() {
+  const leaders = getTopLeaders();
+  const rows = leaders.map((entry, index) => {
+    const rank = index + 1;
+    const rankClass = rank === 1 ? 'gold' : rank === 2 ? 'silver' : 'bronze';
+    return `
+        <div class="leader-row">
+          <div class="leader-rank ${rankClass}">${rank}</div>
+          <div class="leader-avatar">${escapeHtml(entry.initials)}</div>
+          <div class="leader-name" title="${escapeHtml(entry.name)}">${escapeHtml(entry.name)}</div>
+          <div class="leader-metrics">
+            ${SIDEBAR_FIELDS.map(([key, label]) => renderMetricCell(entry[key], label)).join('')}
+          </div>
+        </div>
+      `;
+  }).join('');
+  const empty = state.originators.length === 0 ? 'No roster members yet.' : 'No activity yet today.';
   ui.leadersList.innerHTML = `
     <div class="leaders-header">
       <div class="leaders-title-wrap">
@@ -525,23 +570,7 @@ function renderSidebar() {
       </div>
       <button type="button" class="leaders-view-all">View All</button>
     </div>
-    ${SIDEBAR_LEADERS.slice(0, 3).map((entry, index) => {
-      const rank = index + 1;
-      const rankClass = rank === 1 ? 'gold' : rank === 2 ? 'silver' : 'bronze';
-      return `
-        <div class="leader-row">
-          <div class="leader-rank ${rankClass}">${rank}</div>
-          <div class="leader-avatar">${entry.initials}</div>
-          <div class="leader-name">${entry.name}</div>
-          <div class="leader-metrics">
-            <div class="leader-metric"><span class="metric-value">${entry.leads}</span><span class="metric-label">Leads</span></div>
-            <div class="leader-metric"><span class="metric-value">${entry.contacts}</span><span class="metric-label">Contacts</span></div>
-            <div class="leader-metric"><span class="metric-value">${entry.attachments}</span><span class="metric-label">Attachments</span></div>
-            <div class="leader-metric"><span class="metric-value">${entry.stl}</span><span class="metric-label">STL</span></div>
-          </div>
-        </div>
-      `;
-    }).join('')}
+    ${rows || `<p class="goal-text">${empty}</p>`}
   `;
 
   renderDailyBests();
@@ -549,28 +578,25 @@ function renderSidebar() {
 
 function renderDailyBests() {
   const today = getTodayISO();
-  const pastDates = Object.keys(state.metricsByDate).filter((date) => date < today);
-  const fields = [
-    ['pulls', 'Leads'],
-    ['contacts', 'Contacts'],
-    ['agents', 'Attachments'],
-    ['lender', 'STL'],
-  ];
+  const pastDates = Object.keys(state.metricsByDate).filter((date) => date < today).sort();
   const rows = state.originators.map((originator) => {
-    const bests = {};
-    fields.forEach(([key]) => {
-      bests[key] = pastDates.reduce((max, date) => {
+    const cells = SIDEBAR_FIELDS.map(([key, label]) => {
+      let best = 0;
+      let bestDate = '';
+      pastDates.forEach((date) => {
         const value = clamp(toNumber(state.metricsByDate[date]?.[originator.id]?.[key]));
-        return value > max ? value : max;
-      }, 0);
-    });
+        if (value > 0 && value >= best) {
+          best = value;
+          bestDate = date;
+        }
+      });
+      return renderMetricCell(best, label, bestDate);
+    }).join('');
     return `
-      <div class="leader-row">
-        <div class="leader-avatar">${originator.initials}</div>
-        <div class="leader-name">${originator.name}</div>
-        <div class="leader-metrics">
-          ${fields.map(([key, label]) => `<div class="leader-metric"><span class="metric-value">${bests[key]}</span><span class="metric-label">${label}</span></div>`).join('')}
-        </div>
+      <div class="leader-row no-rank">
+        <div class="leader-avatar">${escapeHtml(originator.initials)}</div>
+        <div class="leader-name" title="${escapeHtml(originator.name)}">${escapeHtml(originator.name)}</div>
+        <div class="leader-metrics">${cells}</div>
       </div>`;
   }).join('');
   ui.dailyBestsList.innerHTML = `
