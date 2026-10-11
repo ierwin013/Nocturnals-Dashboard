@@ -215,6 +215,225 @@ h2 {
   font-size: 0.9rem;
 }
 
+.main-dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 24px;
+  align-items: start;
+}
+
+.dashboard-left {
+  min-width: 0;
+}
+
+.sidebar-container {
+  background-color: #0b1329;
+  border-radius: 12px;
+  padding: 16px;
+  border: 1px solid rgba(117, 146, 186, 0.2);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.22);
+  position: sticky;
+  top: 20px;
+}
+
+.sidebar-container.sidebar-collapsed {
+  display: none;
+}
+
+.sidebar-content {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+}
+
+.sidebar-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.sidebar-tab-btn {
+  border: 1px solid rgba(148, 176, 224, 0.2);
+  background: rgba(19, 30, 48, 0.85);
+  color: #dbe8ff;
+  padding: 10px 8px;
+  border-radius: 10px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sidebar-tab-btn.active {
+  background: linear-gradient(180deg, #1e3255, #172742);
+  border-color: rgba(140, 183, 255, 0.6);
+  box-shadow: inset 0 0 0 1px rgba(140, 183, 255, 0.2);
+}
+
+.sidebar-pane {
+  display: none;
+}
+
+.sidebar-pane.active {
+  display: block;
+}
+
+.leaders-list {
+  display: grid;
+  gap: 12px;
+}
+
+.leader-row {
+  background: rgba(19, 32, 52, 0.8);
+  border: 1px solid rgba(148, 176, 224, 0.15);
+  border-radius: 10px;
+  padding: 10px 10px 8px;
+}
+
+.leader-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.leader-badge {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(122, 165, 252, 0.18);
+  color: #d7ebff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  border: 1px solid rgba(150, 187, 255, 0.25);
+}
+
+.leader-badge.large {
+  width: 36px;
+  height: 36px;
+  font-size: 0.85rem;
+}
+
+.leader-name {
+  flex: 1;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #edf5ff;
+}
+
+.leader-score {
+  font-weight: 700;
+  color: #8cc8ff;
+  font-size: 0.9rem;
+}
+
+.leader-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+.challenge-card {
+  background: rgba(19, 32, 52, 0.8);
+  border: 1px solid rgba(148, 176, 224, 0.15);
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+
+.challenge-label {
+  margin: 0 0 6px;
+  color: var(--muted);
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.challenge-card h3 {
+  margin: 0 0 10px;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #f4f7ff;
+}
+
+.challenge-winner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.winner-name {
+  font-weight: 700;
+  color: #edf5ff;
+}
+
+.winner-metric {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.mini-list {
+  display: grid;
+  gap: 8px;
+}
+
+.mini-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.8rem;
+  color: #d9e8ff;
+}
+
+.pulse-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+  font-size: 0.86rem;
+  color: #dfeafb;
+}
+
+.pulse-content {
+  display: grid;
+  gap: 14px;
+}
+
+.pace-row {
+  display: grid;
+  gap: 8px;
+}
+
+.pace-label-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.76rem;
+  color: var(--muted);
+}
+
+.progress-track {
+  width: 100%;
+  height: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+}
+
 .main-grid {
   display: block;
 }
@@ -492,6 +711,14 @@ menu {
 }
 
 @media (max-width: 1050px) {
+  .main-dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar-container {
+    position: static;
+  }
+
   .goals-list {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -525,6 +752,10 @@ menu {
   }
 
   .goals-list {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar-tabs {
     grid-template-columns: 1fr;
   }
 }
