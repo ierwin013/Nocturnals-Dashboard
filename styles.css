@@ -281,64 +281,130 @@ h2 {
   display: block;
 }
 
+.leaders-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 0 12px;
+  margin-bottom: 2px;
+  border-bottom: 1px solid rgba(160, 186, 224, 0.18);
+}
+
+.leaders-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.leaders-crown {
+  color: #f1c771;
+  font-size: 1.1rem;
+}
+
+.leaders-title {
+  color: #ebf4ff;
+  font-size: 0.93rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.leaders-view-all {
+  background: transparent;
+  border: none;
+  color: #9cc5ff;
+  font-weight: 600;
+  font-size: 0.82rem;
+  cursor: pointer;
+  padding: 0;
+}
+
 .leaders-list {
   display: grid;
-  gap: 12px;
+  gap: 10px;
+  margin-top: 8px;
 }
 
 .leader-row {
-  background: rgba(19, 32, 52, 0.8);
-  border: 1px solid rgba(148, 176, 224, 0.15);
-  border-radius: 10px;
-  padding: 10px 10px 8px;
-}
-
-.leader-top {
-  display: flex;
+  display: grid;
+  grid-template-columns: 26px 38px minmax(0, 1fr) minmax(0, 180px);
   align-items: center;
-  gap: 8px;
-  margin-bottom: 6px;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(160, 186, 224, 0.14);
 }
 
-.leader-badge {
-  display: inline-grid;
-  place-items: center;
-  width: 28px;
-  height: 28px;
+.leader-row:last-child {
+  border-bottom: none;
+}
+
+.leader-rank {
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
-  background: rgba(122, 165, 252, 0.18);
-  color: #d7ebff;
+  display: grid;
+  place-items: center;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #0f1e35;
+  background: #dceaff;
+}
+
+.leader-rank.gold {
+  background: linear-gradient(135deg, #f0d68f, #e4b758);
+}
+
+.leader-rank.silver {
+  background: linear-gradient(135deg, #dfe6ec, #b8c0c8);
+}
+
+.leader-rank.bronze {
+  background: linear-gradient(135deg, #f0c2a3, #c78a5c);
+}
+
+.leader-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #87a4d9, #5d81be);
+  border: 1px solid rgba(184, 216, 255, 0.38);
+  color: #eaf3ff;
   font-size: 0.7rem;
   font-weight: 700;
-  border: 1px solid rgba(150, 187, 255, 0.25);
-}
-
-.leader-badge.large {
-  width: 36px;
-  height: 36px;
-  font-size: 0.85rem;
+  letter-spacing: 0.04em;
 }
 
 .leader-name {
-  flex: 1;
-  font-size: 0.9rem;
-  font-weight: 600;
   color: #edf5ff;
+  font-weight: 600;
+  font-size: 0.96rem;
 }
 
-.leader-score {
-  font-weight: 700;
-  color: #8cc8ff;
-  font-size: 0.9rem;
-}
-
-.leader-meta {
-  display: flex;
-  justify-content: space-between;
+.leader-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 8px;
-  flex-wrap: wrap;
-  font-size: 0.72rem;
+  text-align: center;
+}
+
+.leader-metric {
+  display: grid;
+  gap: 3px;
+}
+
+.metric-value {
+  color: #edf5ff;
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.metric-label {
   color: var(--muted);
+  font-size: 0.56rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
 }
 
 .challenge-card {
@@ -368,6 +434,25 @@ h2 {
   display: flex;
   align-items: center;
   gap: 10px;
+}
+
+.leader-badge {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(122, 165, 252, 0.18);
+  color: #d7ebff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  border: 1px solid rgba(150, 187, 255, 0.25);
+}
+
+.leader-badge.large {
+  width: 36px;
+  height: 36px;
+  font-size: 0.85rem;
 }
 
 .winner-name {
